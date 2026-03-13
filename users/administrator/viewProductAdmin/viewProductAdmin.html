@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>View Product | Lucky Appliances</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/assets/icons/Logo Lucky Apliances.png" type="image/png">
+    <meta name="description" content="Lucky Appliances - View product details">
+    <meta name="author" content="Lucky Appliances">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://lucky-appliances.com/admin/products/view">
+    <meta property="og:title" content="View Product | Lucky Appliances">
+    <meta property="og:description" content="View product details and units">
+    <meta property="og:image" content="https://lucky-appliances.com/img/Logo-Lucky-Apliances.png">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="View Product | Lucky Appliances">
+    <meta name="twitter:description" content="View product details and units">
+    
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="../dashAdmin/dashAdmin.css">
+    <link rel="stylesheet" href="viewProductAdmin.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <script src="/components/navbar-admin-component.js"></script>
+    <script src="/components/theme-manager.js"></script>
+
+    <div class="view-product-container">
+        <!-- Header -->
+        <header class="view-header">
+            <div>
+                <h1>
+                    <i class="fas fa-eye"></i>
+                    Product Details
+                </h1>
+                <p class="header-description">View complete product information and units</p>
+            </div>
+            
+            <div class="header-actions">
+                <a href="../productAdmin/productAdmin.html" class="btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Products
+                </a>
+                <a href="#" id="editProductBtn" class="btn-primary">
+                    <i class="fas fa-edit"></i>
+                    Edit Product
+                </a>
+            </div>
+        </header>
+
+        <!-- Loading -->
+        <div id="loading" class="loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Loading product data...</p>
+        </div>
+
+        <!-- Product Not Found -->
+        <div id="notFound" class="not-found" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h2>Product Not Found</h2>
+            <p>The product you're looking for doesn't exist or has been deleted.</p>
+            <a href="../productAdmin/productAdmin.html" class="btn-primary">
+                <i class="fas fa-arrow-left"></i>
+                Return to Products
+            </a>
+        </div>
+
+        <!-- Product Details -->
+        <div id="productDetails" class="product-details" style="display: none;">
+            <!-- Product Images Section -->
+            <div class="details-section images-section">
+                <div class="section-header">
+                    <i class="fas fa-images"></i>
+                    <h2>Product Images</h2>
+                </div>
+                <div id="imagesContainer" class="images-container">
+                    <!-- Images will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Basic Information Section -->
+            <div class="details-section">
+                <div class="section-header">
+                    <i class="fas fa-info-circle"></i>
+                    <h2>Basic Information</h2>
+                </div>
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <span class="detail-label"><i class="fas fa-cube"></i> Model:</span>
+                        <span class="detail-value" id="modelValue">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label"><i class="fas fa-barcode"></i> SKU:</span>
+                        <span class="detail-value" id="skuValue">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label"><i class="fas fa-hashtag"></i> Internal ID:</span>
+                        <span class="detail-value" id="idInternoValue">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categorization Section -->
+            <div class="details-section">
+                <div class="section-header">
+                    <i class="fas fa-tags"></i>
+                    <h2>Categorization</h2>
+                </div>
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <span class="detail-label"><i class="fas fa-tag"></i> Brand:</span>
+                        <span class="detail-value" id="brandValue">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label"><i class="fas fa-folder"></i> Category:</span>
+                        <span class="detail-value" id="categoryValue">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label"><i class="fas fa-truck"></i> Provider:</span>
+                        <span class="detail-value" id="providerValue">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label"><i class="fas fa-tags"></i> Subcategory:</span>
+                        <span class="detail-value" id="subcategoryValue">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description Section -->
+            <div class="details-section">
+                <div class="section-header">
+                    <i class="fas fa-align-left"></i>
+                    <h2>Description & Specifications</h2>
+                </div>
+                <div class="description-container">
+                    <div class="description-item">
+                        <div class="description-label">Description:</div>
+                        <div class="description-text" id="descriptionValue">-</div>
+                    </div>
+                    <div class="description-item">
+                        <div class="description-label">Specifications:</div>
+                        <div class="description-text" id="specificationsValue">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pricing Section -->
+            <div class="details-section">
+                <div class="section-header">
+                    <i class="fas fa-dollar-sign"></i>
+                    <h2>Pricing</h2>
+                </div>
+                <div class="details-grid">
+                    <div class="detail-item highlight">
+                        <span class="detail-label"><i class="fas fa-store-alt"></i> Competitor Price:</span>
+                        <span class="detail-value price" id="competitorPriceValue">$0.00</span>
+                    </div>
+                    <div class="detail-item highlight">
+                        <span class="detail-label"><i class="fas fa-dollar-sign"></i> Our Price:</span>
+                        <span class="detail-value price our-price" id="ourPriceValue">$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Physical Inventory Section -->
+            <div class="details-section">
+                <div class="section-header">
+                    <i class="fas fa-boxes"></i>
+                    <h2>Physical Inventory</h2>
+                </div>
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <span class="detail-label"><i class="fas fa-weight"></i> Unit Weight:</span>
+                        <span class="detail-value" id="weightValue">0 lbs</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label"><i class="fas fa-map-marker-alt"></i> Location:</span>
+                        <span class="detail-value" id="locationValue">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Units Section -->
+            <div class="details-section units-section">
+                <div class="section-header">
+                    <i class="fas fa-cubes"></i>
+                    <h2>Serial Numbers / Units</h2>
+                    <span class="badge" id="unitsCount">0 units</span>
+                </div>
+                
+                <div id="unitsContainer" class="units-container">
+                    <!-- Units will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Audit Section -->
+            <div class="details-section audit-section">
+                <div class="section-header">
+                    <i class="fas fa-clipboard-check"></i>
+                    <h2>Audit Information</h2>
+                </div>
+                <div class="audit-grid">
+                    <div class="audit-item">
+                        <span class="audit-label"><i class="fas fa-calendar-plus"></i> Created:</span>
+                        <span class="audit-value" id="createdDate">N/A</span>
+                    </div>
+                    <div class="audit-item">
+                        <span class="audit-label"><i class="fas fa-user-plus"></i> Created by:</span>
+                        <span class="audit-value" id="createdBy">N/A</span>
+                    </div>
+                    <div class="audit-item">
+                        <span class="audit-label"><i class="fas fa-calendar-edit"></i> Last updated:</span>
+                        <span class="audit-value" id="updatedDate">N/A</span>
+                    </div>
+                    <div class="audit-item">
+                        <span class="audit-label"><i class="fas fa-user-edit"></i> Last updated by:</span>
+                        <span class="audit-value" id="updatedBy">N/A</span>
+                    </div>
+                    <div class="audit-item">
+                        <span class="audit-label"><i class="fas fa-calendar-alt"></i> Entry date:</span>
+                        <span class="audit-value" id="entryDate">N/A</span>
+                    </div>
+                    <div class="audit-item">
+                        <span class="audit-label"><i class="fas fa-user-check"></i> Entry user:</span>
+                        <span class="audit-value" id="entryUser">N/A</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Main Script -->
+    <script type="module" src="./viewProductAdmin.js"></script>
+    <script src="/components/footer-admin-component.js"></script>
+</body>
+</html>

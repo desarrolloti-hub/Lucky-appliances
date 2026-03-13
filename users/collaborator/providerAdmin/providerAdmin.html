@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Manage Providers | Lucky Appliances</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/assets/icons/Logo Lucky Apliances.png" type="image/png">
+    <meta name="description" content="Lucky Appliances Admin Dashboard - Manage providers">
+    <meta name="author" content="Lucky Appliances">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://lucky-appliances.com/admin/providers">
+    <meta property="og:title" content="Provider Management | Lucky Appliances">
+    <meta property="og:description" content="Manage providers for your appliance store">
+    <meta property="og:image" content="https://lucky-appliances.com/img/Logo-Lucky-Apliances.png">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Provider Management | Lucky Appliances">
+    <meta name="twitter:description" content="Manage providers for your appliance store">
+    
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/dashAdmin/dashAdmin.css">
+    <link rel="stylesheet" href="providerAdmin.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <script src="/components/navbar-admin-component.js"></script>
+    <script src="/components/theme-manager.js"></script>
+
+    <div class="dashboard-container provider-admin-container">
+        <!-- Header -->
+        <header class="provider-header">
+            <div>
+                <h1>
+                    <i class="fas fa-truck"></i>
+                    Manage Providers
+                </h1>
+                <p class="header-description">Manage appliance suppliers and providers</p>
+            </div>
+            
+            <div class="header-info">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" 
+                           id="searchInput" 
+                           placeholder="Search by name, ID or RFC..."
+                           class="search-input">
+                </div>
+                
+                <div class="item-count">
+                    <i class="fas fa-layer-group"></i>
+                    <span id="itemCount">0</span> providers
+                </div>
+                
+                <button id="addBtn" class="btn-primary">
+                    <i class="fas fa-plus-circle"></i>
+                    New Provider
+                </button>
+            </div>
+        </header>
+
+        <!-- Loading -->
+        <div id="loading" class="loading">
+            <i class="fas fa-spinner"></i>
+            <p>Loading providers...</p>
+        </div>
+
+        <!-- Provider Grid -->
+        <div id="providerContainer" class="provider-grid">
+            <!-- Providers will be loaded here dynamically -->
+        </div>
+    </div>
+
+    <!-- Form Overlay -->
+    <div id="formOverlay" class="form-overlay"></div>
+
+    <!-- Form (initially hidden) -->
+    <div id="formContainer" class="form-container">
+        <div class="form-header">
+            <h2 id="formTitle">
+                <i class="fas fa-truck"></i>
+                Add Provider
+            </h2>
+            <button id="cancelBtn" class="btn-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="form-content">
+            <form id="providerForm">
+                <input type="hidden" id="itemId">
+                
+                <div class="form-group">
+                    <label for="idInterno">
+                        <i class="fas fa-hashtag"></i>
+                        Internal ID *
+                    </label>
+                    <input type="text" 
+                           id="idInterno" 
+                           class="form-control" 
+                           placeholder="Example: PROV001"
+                           required
+                           maxlength="20">
+                    <small class="form-hint">Unique provider identifier (max 20 characters)</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="nombre">
+                        <i class="fas fa-building"></i>
+                        Company/Brand Name *
+                    </label>
+                    <input type="text" 
+                           id="nombre" 
+                           class="form-control" 
+                           placeholder="Example: Samsung Electronics"
+                           required
+                           maxlength="100">
+                    <small class="form-hint">Enter the provider/brand name (max 100 characters)</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="rfc">
+                        <i class="fas fa-id-card"></i>
+                        RFC *
+                    </label>
+                    <input type="text" 
+                           id="rfc" 
+                           class="form-control" 
+                           placeholder="Enter RFC"
+                           required
+                           maxlength="20">
+                    <small class="form-hint">Tax ID (RFC) - No specific format required</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="imageInput">
+                        <i class="fas fa-image"></i>
+                        Company Logo
+                    </label>
+                    <div class="image-upload">
+                        <input type="file" 
+                               id="imageInput" 
+                               class="form-control"
+                               accept="image/*">
+                        <small class="form-hint">Recommended: Square logo, transparent background (max 2MB)</small>
+                    </div>
+                    
+                    <div id="imagePreview" class="image-preview">
+                        <i class="fas fa-image"></i>
+                        <span>Logo preview</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <small class="form-hint">
+                        <i class="fas fa-info-circle"></i>
+                        Fields marked with * are required
+                    </small>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" id="submitBtn" class="btn-submit">
+                        <i class="fas fa-save"></i>
+                        Save Provider
+                    </button>
+                    <button type="button" id="cancelBtn2" class="btn-cancel">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Main Script -->
+    <script type="module" src="./providerAdmin.js"></script>
+    <script src="/components/footer-admin-component.js"></script>
+</body>
+</html>

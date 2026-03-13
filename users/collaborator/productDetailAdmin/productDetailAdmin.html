@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Product Details | Lucky Appliances</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/assets/icons/Logo Lucky Apliances.png" type="image/png">
+    <meta name="description" content="Product details and units management">
+    <meta name="author" content="Lucky Appliances">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://lucky-appliances.com/product-detail">
+    <meta property="og:title" content="Product Details | Lucky Appliances">
+    <meta property="og:description" content="View product details and available units">
+    <meta property="og:image" content="https://lucky-appliances.com/img/Logo-Lucky-Apliances.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Product Details | Lucky Appliances">
+    <meta name="twitter:description" content="View product details and available units">
+
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../dashAdmin/dashAdmin.css">
+    <link rel="stylesheet" href="productDetailAdmin.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <script src="/components/navbar-admin-component.js"></script>
+    <script src="/components/theme-manager.js"></script>
+
+    <div class="product-detail-container">
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Loading product details...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="error-state" style="display: none;">
+            <i class="fas fa-exclamation-circle"></i>
+            <h3>Product Not Found</h3>
+            <p>The product you're looking for doesn't exist or has been removed.</p>
+            <button onclick="window.location.href='../posAdmin/posAdmin.html'" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Back to POS
+            </button>
+        </div>
+
+        <!-- Product Content (hidden initially) -->
+        <div id="productContent" style="display: none;">
+            <!-- Header with navigation and cart -->
+            <header class="detail-header">
+                <div class="header-left">
+                    <button onclick="window.location.href='../posAdmin/posAdmin.html'" class="btn-icon" title="Back to POS">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <h1><i class="fas fa-box"></i> Product Details</h1>
+                </div>
+                
+                <!-- Cart Indicator -->
+                <div class="cart-indicator" id="cartIndicator" onclick="showCartModal()">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-badge" id="cartBadge">0</span>
+                    <span class="cart-text">View Cart</span>
+                </div>
+            </header>
+
+            <!-- Main Product Info -->
+            <div class="product-main">
+                <!-- Product Image Gallery -->
+                <div class="product-image-section">
+                    <div class="main-image">
+                        <img id="productImage" src="" alt="Product Image">
+                    </div>
+                    <div class="image-thumbnails" id="imageThumbnails">
+                        <!-- Thumbnails will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Product Details -->
+                <div class="product-info-section">
+                    <h1 id="productModel" class="product-title"></h1>
+                    
+                    <div class="product-badges">
+                        <span class="badge sku-badge" id="productSKU"></span>
+                        <span class="badge interno-badge" id="productIdInterno"></span>
+                    </div>
+
+                    <div class="product-price-box">
+                        <div class="price-row">
+                            <span class="price-label">Our Price:</span>
+                            <span class="price-our" id="productOurPrice"></span>
+                        </div>
+                        <div class="price-row">
+                            <span class="price-label">Competitor Price:</span>
+                            <span class="price-competitor" id="productCompetitorPrice"></span>
+                        </div>
+                    </div>
+
+                    <div class="product-attributes">
+                        <div class="attribute-item">
+                            <i class="fas fa-tag"></i>
+                            <span class="attribute-label">Brand:</span>
+                            <span class="attribute-value" id="productBrand"></span>
+                        </div>
+                        <div class="attribute-item">
+                            <i class="fas fa-folder"></i>
+                            <span class="attribute-label">Category:</span>
+                            <span class="attribute-value" id="productCategory"></span>
+                        </div>
+                        <div class="attribute-item">
+                            <i class="fas fa-layer-group"></i>
+                            <span class="attribute-label">Subcategory:</span>
+                            <span class="attribute-value" id="productSubcategory"></span>
+                        </div>
+                        <div class="attribute-item">
+                            <i class="fas fa-truck"></i>
+                            <span class="attribute-label">Provider:</span>
+                            <span class="attribute-value" id="productProvider"></span>
+                        </div>
+                        <div class="attribute-item">
+                            <i class="fas fa-weight"></i>
+                            <span class="attribute-label">Weight:</span>
+                            <span class="attribute-value" id="productWeight"></span>
+                        </div>
+                        <div class="attribute-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span class="attribute-label">Location:</span>
+                            <span class="attribute-value" id="productLocation"></span>
+                        </div>
+                    </div>
+
+                    <div class="product-stock-info">
+                        <div class="stock-badge" id="stockBadge">
+                            <i class="fas fa-cubes"></i>
+                            <span id="totalStock"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description and Specs -->
+            <div class="product-details-grid">
+                <div class="detail-card">
+                    <h3><i class="fas fa-align-left"></i> Description</h3>
+                    <p id="productDescription" class="detail-text"></p>
+                </div>
+                
+                <div class="detail-card">
+                    <h3><i class="fas fa-cog"></i> Specifications</h3>
+                    <p id="productSpecs" class="detail-text"></p>
+                </div>
+            </div>
+
+            <!-- Audit Information -->
+            <div class="audit-section">
+                <h3><i class="fas fa-history"></i> Audit Information</h3>
+                <div class="audit-grid">
+                    <div class="audit-item">
+                        <span class="audit-label">Entry Date:</span>
+                        <span class="audit-value" id="entryDate"></span>
+                    </div>
+                    <div class="audit-item">
+                        <span class="audit-label">Entry User:</span>
+                        <span class="audit-value" id="entryUser"></span>
+                    </div>
+                    <div class="audit-item">
+                        <span class="audit-label">Created:</span>
+                        <span class="audit-value" id="createdDate"></span>
+                    </div>
+                    <div class="audit-item">
+                        <span class="audit-label">Last Updated:</span>
+                        <span class="audit-value" id="updatedDate"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Units Available Section -->
+            <div class="units-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-barcode"></i> Available Units (Serials)</h2>
+                    <div class="header-actions">
+                        <span class="units-count" id="unitsCount">0 units</span>
+                        <button class="btn-refresh" onclick="refreshUnits()" title="Refresh units">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="units-grid" id="unitsGrid">
+                    <!-- Units will be loaded here -->
+                </div>
+
+                <div id="noUnitsMessage" class="no-units-message" style="display: none;">
+                    <i class="fas fa-box-open"></i>
+                    <p>No units available for this product</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cartModal" class="cart-modal">
+        <div class="cart-modal-content">
+            <div class="cart-modal-header">
+                <h2><i class="fas fa-shopping-cart"></i> Your Cart</h2>
+                <button class="cart-modal-close" onclick="closeCartModal()">&times;</button>
+            </div>
+            
+            <div class="cart-modal-body" id="cartModalBody">
+                <!-- Cart items will be loaded here -->
+            </div>
+            
+            <div class="cart-modal-footer">
+                <div class="cart-summary">
+                    <div class="summary-row">
+                        <span>Total Items:</span>
+                        <span id="cartTotalItems">0</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Total:</span>
+                        <span id="cartTotalAmount">$0.00</span>
+                    </div>
+                </div>
+                <div class="cart-actions">
+                    <button class="btn-clear-cart" onclick="clearCartFromModal()">
+                        <i class="fas fa-trash"></i> Clear Cart
+                    </button>
+                    <button class="btn-checkout" onclick="proceedToCheckout()" id="checkoutBtn" disabled>
+                        <i class="fas fa-check-circle"></i> Complete Sale
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Main Script -->
+    <script type="module" src="productDetailAdmin.js"></script>
+    <script src="/components/footer-admin-component.js"></script>
+</body>
+</html>

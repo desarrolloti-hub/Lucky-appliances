@@ -1,0 +1,18 @@
+{
+  "name": "Lucky Appliances",
+  "short_name": "Lucky",
+  "description": "Lucky Appliances – Product catalog and services",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0a2540",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/assets/icons/Logo Lucky Apliances.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

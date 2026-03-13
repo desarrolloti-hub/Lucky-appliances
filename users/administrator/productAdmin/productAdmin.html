@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Manage Products | Lucky Appliances</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/assets/icons/Logo Lucky Apliances.png" type="image/png">
+    <meta name="description" content="Lucky Appliances Admin Dashboard - Manage products">
+    <meta name="author" content="Lucky Appliances">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://lucky-appliances.com/admin/products">
+    <meta property="og:title" content="Product Management | Lucky Appliances">
+    <meta property="og:description" content="Manage products for your appliance store">
+    <meta property="og:image" content="https://lucky-appliances.com/img/Logo-Lucky-Apliances.png">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Product Management | Lucky Appliances">
+    <meta name="twitter:description" content="Manage products for your appliance store">
+    
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="../dashAdmin/dashAdmin.css">
+    <link rel="stylesheet" href="productAdmin.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <script src="/components/navbar-admin-component.js"></script>
+    <script src="/components/theme-manager.js"></script>
+
+    <div class="dashboard-container product-admin-container">
+        <!-- Header -->
+        <header class="product-header">
+            <div>
+                <h1>
+                    <i class="fas fa-box"></i>
+                    Manage Products
+                </h1>
+                <p class="header-description">Manage your appliance inventory with full details, units tracking, and pricing</p>
+            </div>
+            
+            <div class="header-info">
+                <div class="header-stats">
+                    <div class="stat-item total-value">
+                        <i class="fas fa-dollar-sign"></i>
+                        Total Value: <span id="totalValue">$0</span>
+                    </div>
+                    <div class="stat-item total-qty">
+                        <i class="fas fa-boxes"></i>
+                        Total Units: <span id="totalQty">0</span>
+                    </div>
+                    <div class="stat-item count">
+                        <i class="fas fa-cube"></i>
+                        Products: <span id="itemCount">0</span>
+                    </div>
+                </div>
+                
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" 
+                           id="searchInput" 
+                           placeholder="Search by model, SKU, serial, ID..."
+                           class="search-input">
+                </div>
+                
+                <button id="addBtn" class="btn-primary">
+                    <i class="fas fa-plus-circle"></i>
+                    New Product
+                </button>
+                <button id="generateReportBtn" class="btn-primary" style="background: linear-gradient(135deg, #28a745, #20c997);">
+                    <i class="fas fa-file-pdf"></i>
+                    Generate PDF Report
+                </button>
+            </div>
+        </header>
+
+        <!-- Loading -->
+        <div id="loading" class="loading">
+            <i class="fas fa-spinner"></i>
+            <p>Loading products...</p>
+        </div>
+
+        <!-- Product Grid -->
+        <div id="productContainer" class="product-grid">
+            <!-- Products will be loaded here dynamically -->
+        </div>
+        
+        <!-- Pagination -->
+        <div id="paginationContainer" class="pagination-container">
+            <!-- Pagination will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Librerías para PDF - CDN alternativo -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Main Script -->
+    <script type="module" src="./productAdmin.js"></script>
+    <script src="/components/footer-admin-component.js"></script>
+</body>
+</html>

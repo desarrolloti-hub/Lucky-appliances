@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Login | Lucky Appliances</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/assets/icons/Logo Lucky Apliances.png" type="image/png">
+    <meta name="description" content="Login to Lucky Appliances Admin Dashboard">
+    <meta name="author" content="Lucky Appliances">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://lucky-appliances.com/login">
+    <meta property="og:title" content="Login | Lucky Appliances">
+    <meta property="og:description" content="Access your Lucky Appliances admin dashboard">
+    <meta property="og:image" content="https://lucky-appliances.com/img/Logo-Lucky-Apliances.png">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Login | Lucky Appliances">
+    <meta name="twitter:description" content="Access your Lucky Appliances admin dashboard">
+    
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <!-- Login CSS -->
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+    <!-- Theme Manager -->
+    <script src="/components/theme-manager.js"></script>
+    <script src="/components/navbar-visitor-component.js"></script>
+
+    <!-- Main Content -->
+    <main class="login-main">
+        <div class="login-container">
+            <!-- Login Card -->
+            <div class="login-card">
+                <div class="card-header">
+                    <h2>
+                        <i class="fas fa-sign-in-alt"></i>
+                        Sign In
+                    </h2>
+                    <p>Enter your credentials to access the dashboard</p>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loading" class="loading" style="display: none;">
+                    <i class="fas fa-spinner"></i>
+                    <p>Signing in...</p>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm" novalidate>
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label for="email">
+                            <i class="fas fa-envelope"></i>
+                            Email Address <span class="required">*</span>
+                        </label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-user"></i>
+                            <input type="email" 
+                                   id="email" 
+                                   class="form-control" 
+                                   placeholder="Enter your email"
+                                   required
+                                   autocomplete="email">
+                        </div>
+                        <div class="form-error" id="emailError"></div>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="form-group">
+                        <label for="password">
+                            <i class="fas fa-key"></i>
+                            Password <span class="required">*</span>
+                        </label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" 
+                                   id="password" 
+                                   class="form-control" 
+                                   placeholder="Enter your password"
+                                   required
+                                   autocomplete="current-password">
+                            <button type="button" 
+                                    id="togglePassword" 
+                                    class="password-toggle">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="form-error" id="passwordError"></div>
+                    </div>
+
+                    <!-- Remember Me & Forgot Password -->
+                    <div class="remember-forgot">
+                        <label class="remember-me">
+                            <input type="checkbox" id="rememberMe">
+                            <span>Remember me</span>
+                        </label>
+                    </div>
+                    <!-- Forgot Password Link -->
+                    <div class="form-group text-center">
+                        <a href="#" id="forgotPasswordLink" class="forgot-password">
+                            <i class="fas fa-key"></i> Forgot your password?
+                        </a>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn-primary" id="submitBtn">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Sign In
+                    </button>
+                </form>
+            </div>
+
+
+            <!-- Success Message (hidden by default) -->
+            <div id="resetSuccess" class="success-message" style="display: none;">
+                <div class="success-content">
+                    <i class="fas fa-check-circle"></i>
+                    <h4>Reset Email Sent!</h4>
+                    <p>Check your email for a link to reset your password.</p>
+                    <button type="button" class="btn-primary" id="closeSuccess">OK</button>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="/components/footer-visitor-component.js"></script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Login Script -->
+    <script type="module" src="login.js"></script>
+</body>
+</html>

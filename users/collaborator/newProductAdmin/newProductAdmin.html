@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Create Product | Lucky Appliances</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/assets/icons/Logo Lucky Apliances.png" type="image/png">
+    <meta name="description" content="Lucky Appliances - Create new product">
+    <meta name="author" content="Lucky Appliances">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://lucky-appliances.com/admin/products/create">
+    <meta property="og:title" content="Create Product | Lucky Appliances">
+    <meta property="og:description" content="Create a new product for your appliance store">
+    <meta property="og:image" content="https://lucky-appliances.com/img/Logo-Lucky-Apliances.png">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Create Product | Lucky Appliances">
+    <meta name="twitter:description" content="Create a new product for your appliance store">
+    
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="../dashAdmin/dashAdmin.css">
+    <link rel="stylesheet" href="newProductAdmin.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <script src="/components/navbar-admin-component.js"></script>
+    <script src="/components/theme-manager.js"></script>
+
+    <div class="create-product-container">
+        <!-- Header -->
+        <header class="create-header">
+            <div>
+                <h1>
+                    <i class="fas fa-plus-circle"></i>
+                    Create New Product
+                </h1>
+                <p class="header-description">Add a new product to inventory with details, images, and serial numbers</p>
+            </div>
+            
+            <div class="header-actions">
+                <a href="../productAdmin/productAdmin.html" class="btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Products
+                </a>
+            </div>
+        </header>
+
+        <!-- Loading -->
+        <div id="loading" class="loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Loading form data...</p>
+        </div>
+
+        <!-- Main Form -->
+        <div class="form-wrapper">
+            <form id="productForm">
+                <input type="hidden" id="itemId" value="">
+                
+                <!-- SECCIÓN 1: INFORMACIÓN BÁSICA -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fas fa-info-circle"></i>
+                        <h2>Basic Information</h2>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="Model">
+                                <i class="fas fa-cube"></i>
+                                Model *
+                            </label>
+                            <input type="text" 
+                                   id="Model" 
+                                   class="form-control" 
+                                   placeholder="Product model number"
+                                   required
+                                   maxlength="100">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="SKU">
+                                <i class="fas fa-barcode"></i>
+                                SKU *
+                            </label>
+                            <input type="text" 
+                                   id="SKU" 
+                                   class="form-control" 
+                                   placeholder="Stock keeping unit"
+                                   required
+                                   maxlength="50">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="idInterno">
+                            <i class="fas fa-hashtag"></i>
+                            Internal ID
+                        </label>
+                        <input type="text" 
+                               id="idInterno" 
+                               class="form-control" 
+                               placeholder="Internal product identifier (optional)"
+                               maxlength="50">
+                        <small class="form-hint">Optional: Your internal reference code</small>
+                    </div>
+                </div>
+                
+                <!-- SECCIÓN 2: CATEGORIZACIÓN -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fas fa-tags"></i>
+                        <h2>Categorization</h2>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="Brand">
+                                <i class="fas fa-tag"></i>
+                                Brand *
+                            </label>
+                            <select id="Brand" class="form-control" required>
+                                <option value="">Select a brand</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="Category">
+                                <i class="fas fa-folder"></i>
+                                Category *
+                            </label>
+                            <select id="Category" class="form-control" required>
+                                <option value="">Select a category</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="Provider">
+                                <i class="fas fa-truck"></i>
+                                Provider *
+                            </label>
+                            <select id="Provider" class="form-control" required>
+                                <option value="">Select a provider</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="Subcategory">
+                                <i class="fas fa-tags"></i>
+                                Subcategory
+                            </label>
+                            <input type="text" 
+                                   id="Subcategory" 
+                                   class="form-control" 
+                                   placeholder="Optional subcategory"
+                                   maxlength="100">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- SECCIÓN 3: DESCRIPCIÓN Y ESPECIFICACIONES -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fas fa-align-left"></i>
+                        <h2>Description & Specifications</h2>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ItemDescription">
+                            <i class="fas fa-align-left"></i>
+                            Description
+                        </label>
+                        <textarea id="ItemDescription" 
+                                  class="form-control" 
+                                  placeholder="Product description..."
+                                  rows="3"
+                                  maxlength="500"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="especificaciones">
+                            <i class="fas fa-clipboard-list"></i>
+                            Specifications
+                        </label>
+                        <textarea id="especificaciones" 
+                                  class="form-control" 
+                                  placeholder="Technical specifications, features, dimensions, materials..."
+                                  rows="3"
+                                  maxlength="500"></textarea>
+                        <small class="form-hint">Dimensions, materials, technical details</small>
+                    </div>
+                </div>
+                
+                <!-- SECCIÓN 4: PRECIOS -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fas fa-dollar-sign"></i>
+                        <h2>Pricing</h2>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="precioCompetencia">
+                                <i class="fas fa-store-alt"></i>
+                                Competitor Price
+                            </label>
+                            <div class="price-input-wrapper">
+                                <span class="currency-symbol">$</span>
+                                <input type="number" 
+                                       id="precioCompetencia" 
+                                       class="form-control price-input" 
+                                       placeholder="0.00"
+                                       min="0"
+                                       step="0.01"
+                                       value="0">
+                            </div>
+                            <small class="form-hint">Competitor's selling price</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="nuestroPrecio">
+                                <i class="fas fa-dollar-sign"></i>
+                                Our Price *
+                            </label>
+                            <div class="price-input-wrapper">
+                                <span class="currency-symbol">$</span>
+                                <input type="number" 
+                                       id="nuestroPrecio" 
+                                       class="form-control price-input" 
+                                       placeholder="0.00"
+                                       min="0"
+                                       step="0.01"
+                                       required
+                                       value="0">
+                            </div>
+                            <small class="form-hint">Our selling price</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- SECCIÓN 5: INVENTARIO FÍSICO -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fas fa-boxes"></i>
+                        <h2>Physical Inventory</h2>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="UnitWeight">
+                                <i class="fas fa-weight"></i>
+                                Unit Weight (lbs)
+                            </label>
+                            <input type="number" 
+                                   id="UnitWeight" 
+                                   class="form-control" 
+                                   placeholder="0"
+                                   min="0"
+                                   step="0.1"
+                                   value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="Location">
+                                <i class="fas fa-map-marker-alt"></i>
+                                Location
+                            </label>
+                            <input type="text" 
+                                   id="Location" 
+                                   class="form-control" 
+                                   placeholder="Warehouse location (e.g., A-12)"
+                                   maxlength="100">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- SECCIÓN 6: UNIDADES (NÚMEROS DE SERIE) -->
+                <div class="form-section" id="units-section">
+                    <div class="section-header">
+                        <i class="fas fa-cubes"></i>
+                        <h2>Serial Numbers / Units</h2>
+                        <span class="badge" id="unitsCount">0 units</span>
+                    </div>
+                    
+                    <div class="units-info">
+                        <i class="fas fa-info-circle"></i>
+                        <p>Add the serial numbers for this product. You can add multiple units at once.</p>
+                    </div>
+                    
+                    <div class="units-input-group">
+                        <div class="units-textarea-wrapper">
+                            <textarea id="serialNumbersInput" 
+                                      class="form-control serial-numbers-input" 
+                                      placeholder="Enter serial numbers (one per line)&#10;Example:&#10;SN00123456&#10;SN00123457&#10;SN00123458"
+                                      rows="5"></textarea>
+                        </div>
+                        <button type="button" id="addUnitsBtn" class="btn-add-units">
+                            <i class="fas fa-plus"></i>
+                            Add to List
+                        </button>
+                    </div>
+                    
+                    <div class="units-list-header">
+                        <span><i class="fas fa-list"></i> Units to be added:</span>
+                        <button type="button" id="clearAllUnitsBtn" class="btn-clear-units" style="display: none;">
+                            <i class="fas fa-trash"></i> Clear All
+                        </button>
+                    </div>
+                    
+                    <div id="unitsListContainer" class="units-list-container">
+                        <!-- Units will be added here dynamically -->
+                        <div class="empty-units">
+                            <i class="fas fa-cube"></i>
+                            <p>No units added yet. Add serial numbers above.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="units-summary">
+                        <span>Total units to add: <strong id="totalUnitsCount">0</strong></span>
+                    </div>
+                </div>
+                
+                <!-- SECCIÓN 7: IMÁGENES -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fas fa-images"></i>
+                        <h2>Product Images</h2>
+                        <span class="badge" id="imagesCount">0/3</span>
+                    </div>
+                    
+                    <div class="image-upload-area" id="imageUploadArea">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Click to upload or drag & drop images</p>
+                        <p class="text-light">Maximum 3 images, 2MB each (JPG, PNG, GIF)</p>
+                        <input type="file" 
+                               id="imageInput" 
+                               class="form-control"
+                               accept="image/jpeg,image/png,image/gif,image/webp"
+                               multiple
+                               style="display: none;">
+                    </div>
+                    
+                    <div id="imagePreviewContainer" class="image-preview-container">
+                        <!-- Image previews will appear here -->
+                    </div>
+                    <small class="form-hint">Click on an image to remove it</small>
+                </div>
+                
+                <!-- FORM ACTIONS -->
+                <div class="form-actions">
+                    <button type="submit" id="submitBtn" class="btn-submit">
+                        <i class="fas fa-save"></i>
+                        Create Product
+                    </button>
+                    <a href="productAdmin.html" class="btn-cancel">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Main Script -->
+    <script type="module" src="./newProductAdmin.js"></script>
+    <script src="/components/footer-admin-component.js"></script>
+</body>
+</html>

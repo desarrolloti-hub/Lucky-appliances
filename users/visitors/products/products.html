@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products | Lucky Appliances</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/assets/icons/Logo Lucky Apliances.png" type="image/png">
+    <meta name="description" content="Browse our premium appliance collection at Lucky Appliances">
+    <meta name="author" content="Lucky Appliances">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://lucky-appliances.com/products">
+    <meta property="og:title" content="Products | Lucky Appliances">
+    <meta property="og:description" content="Browse our premium appliance collection">
+    <meta property="og:image" content="https://lucky-appliances.com/img/Logo-Lucky-Apliances.png">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Products | Lucky Appliances">
+    <meta name="twitter:description" content="Browse our premium appliance collection">
+    
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS de productos -->
+    <link rel="stylesheet" href="products.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <script src="/components/navbar-visitor-component.js"></script>
+    <script src="/components/theme-manager.js"></script>
+
+    <div class="products-page">
+        <!-- Header -->
+        <header class="products-header">
+            <div class="container">
+                <div class="header-content">
+                    <h1>
+                        <i class="fas fa-boxes"></i>
+                        Our Products
+                    </h1>
+                    <p class="header-description">
+                        Discover our premium collection of home appliances
+                    </p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="products-main">
+            <div class="container">
+                <!-- Filters Sidebar -->
+                <aside class="filters-sidebar">
+                    <div class="filters-header">
+                        <h3><i class="fas fa-filter"></i> Filters</h3>
+                        <button id="clearFilters" class="clear-btn">Clear All</button>
+                    </div>
+
+                    <!-- Todos los filtros dentro de un contenedor acordeón -->
+                    <div class="filters-accordion">
+                        <!-- Search -->
+                        <div class="filter-section" data-section="search">
+                            <div class="filter-header">
+                                <h4><i class="fas fa-search"></i> Search</h4>
+                                <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+                            </div>
+                            <div class="filter-content">
+                                <div class="search-box">
+                                    <input type="text" id="searchInput" placeholder="Search products...">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Brands Filter -->
+                        <div class="filter-section" data-section="brands">
+                            <div class="filter-header">
+                                <h4><i class="fas fa-tag"></i> Brands</h4>
+                                <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+                            </div>
+                            <div class="filter-content">
+                                <div class="filter-options" id="brandsFilter">
+                                    <!-- Brands will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Categories Filter -->
+                        <div class="filter-section" data-section="categories">
+                            <div class="filter-header">
+                                <h4><i class="fas fa-folder"></i> Categories</h4>
+                                <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+                            </div>
+                            <div class="filter-content">
+                                <div class="filter-options" id="categoriesFilter">
+                                    <!-- Categories will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Price Range -->
+                        <div class="filter-section" data-section="price">
+                            <div class="filter-header">
+                                <h4><i class="fas fa-dollar-sign"></i> Price Range</h4>
+                                <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+                            </div>
+                            <div class="filter-content">
+                                <div class="price-range">
+                                    <div class="range-inputs">
+                                        <input type="number" id="minPrice" placeholder="Minimum Price" min="0">
+                                        <input type="number" id="maxPrice" placeholder="Maximum Price" min="0">
+                                    </div>
+                                    <button id="applyPrice" class="apply-btn">Apply Price Range</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stock Filter -->
+                        <div class="filter-section" data-section="stock">
+                            <div class="filter-header">
+                                <h4><i class="fas fa-box"></i> Stock Status</h4>
+                                <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+                            </div>
+                            <div class="filter-content">
+                                <div class="filter-options">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="inStock" checked>
+                                        <span>In Stock</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="outOfStock">
+                                        <span>Out of Stock</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sort Options -->
+                        <div class="filter-section" data-section="sort">
+                            <div class="filter-header">
+                                <h4><i class="fas fa-sort"></i> Sort By</h4>
+                                <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+                            </div>
+                            <div class="filter-content">
+                                <select id="sortBy" class="sort-select">
+                                    <option value="newest">Newest First</option>
+                                    <option value="price-low">Price: Low to High</option>
+                                    <option value="price-high">Price: High to Low</option>
+                                    <option value="name">Name: A to Z</option>
+                                    <option value="quantity">Quantity: High to Low</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Products Grid -->
+                <section class="products-grid-section">
+                    <!-- Results Info -->
+                    <div class="results-info">
+                        <div class="results-count">
+                            <span id="resultsCount">0</span> products found
+                        </div>
+                        <div class="view-toggle">
+                            <button id="gridView" class="view-btn active">
+                                <i class="fas fa-th"></i>
+                            </button>
+                            <button id="listView" class="view-btn">
+                                <i class="fas fa-list"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Loading -->
+                    <div id="loading" class="loading">
+                        <i class="fas fa-spinner"></i>
+                        <p>Loading products...</p>
+                    </div>
+
+                    <!-- Products Grid -->
+                    <div id="productsContainer" class="products-grid">
+                        <!-- Products will be loaded here -->
+                    </div>
+
+                    <!-- No Results -->
+                    <div id="noResults" class="no-results" style="display: none;">
+                        <i class="fas fa-search"></i>
+                        <h3>No products found</h3>
+                        <p>Try adjusting your filters or search terms</p>
+                        <button id="resetFilters" class="btn-primary">
+                            <i class="fas fa-redo"></i>
+                            Reset Filters
+                        </button>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div id="pagination" class="pagination" style="display: none;">
+                        <!-- Pagination will be loaded here -->
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <script src="/components/footer-visitor-component.js"></script>
+
+        <!-- Floating Buttons -->
+        <script src="/components/float-buttons-component.js"></script>
+    </div>
+
+    <!-- JavaScript de productos -->
+    <script type="module" src="products.js"></script>
+</body>
+</html>

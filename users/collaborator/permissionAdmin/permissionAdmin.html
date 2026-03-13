@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Manage Permissions | Lucky Appliances</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/assets/icons/Logo Lucky Apliances.png" type="image/png">
+    <meta name="description" content="Lucky Appliances Admin Dashboard - Manage permissions and roles">
+    <meta name="author" content="Lucky Appliances">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://lucky-appliances.com/admin/permissions">
+    <meta property="og:title" content="Permission Management | Lucky Appliances">
+    <meta property="og:description" content="Manage user roles and permissions">
+    <meta property="og:image" content="https://lucky-appliances.com/img/Logo-Lucky-Apliances.png">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Permission Management | Lucky Appliances">
+    <meta name="twitter:description" content="Manage user roles and permissions">
+    
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="../dashAdmin/dashAdmin.css">
+    <link rel="stylesheet" href="permissionAdmin.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <script src="/components/navbar-admin-component.js"></script>
+    <script src="/components/theme-manager.js"></script>
+
+    <div class="dashboard-container permission-admin-container">
+        <!-- Header -->
+        <header class="permission-header">
+            <div>
+                <h1>
+                    <i class="fas fa-lock"></i>
+                    Manage Permissions
+                </h1>
+                <p class="header-description">Configure access permissions for user roles</p>
+            </div>
+            
+            <div class="header-info">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" 
+                           id="searchInput" 
+                           placeholder="Search roles..."
+                           class="search-input">
+                </div>
+                
+                <div class="item-count">
+                    <i class="fas fa-layer-group"></i>
+                    <span id="itemCount">0</span> roles
+                </div>
+                
+                <button id="addBtn" class="btn-primary">
+                    <i class="fas fa-plus-circle"></i>
+                    New Role
+                </button>
+            </div>
+        </header>
+
+        <!-- Loading -->
+        <div id="loading" class="loading">
+            <i class="fas fa-spinner"></i>
+            <p>Loading permissions...</p>
+        </div>
+
+        <!-- Permission Grid -->
+        <div id="permissionContainer" class="permission-grid">
+            <!-- Permissions will be loaded here dynamically -->
+        </div>
+    </div>
+
+    <!-- Form Overlay -->
+    <div id="formOverlay" class="form-overlay"></div>
+
+    <!-- Form (initially hidden) -->
+    <div id="formContainer" class="form-container">
+        <div class="form-header">
+            <h2 id="formTitle">
+                <i class="fas fa-lock"></i>
+                Configure Role Permissions
+            </h2>
+            <button id="cancelBtn" class="btn-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="form-content">
+            <form id="permissionForm">
+                <input type="hidden" id="itemId">
+                
+                <div class="form-group">
+                    <label for="role">
+                        <i class="fas fa-user-tag"></i>
+                        Role Name *
+                    </label>
+                    <select id="role" class="select-control" required>
+                        <option value="">Select a role</option>
+                        <option value="admin">Administrator</option>
+                        <option value="developer">Developer</option>
+                        <option value="auditor">Auditor</option>
+                        <option value="sales">Sales</option>
+                        <option value="store">Store</option>
+                    </select>
+                    <small class="form-hint">Select the user role to configure</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-shield-alt"></i>
+                        Module Permissions
+                    </label>
+                    <div class="permissions-list" id="permissionsList">
+                        <!-- Permissions will be loaded here via JS -->
+                    </div>
+                    <small class="form-hint">Enable or disable access for each module</small>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" id="submitBtn" class="btn-submit">
+                        <i class="fas fa-save"></i>
+                        Save Permissions
+                    </button>
+                    <button type="button" id="cancelBtn2" class="btn-cancel">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Main Script -->
+    <script type="module" src="./permissionAdmin.js"></script>
+    <script src="/components/footer-admin-component.js"></script>
+</body>
+</html>

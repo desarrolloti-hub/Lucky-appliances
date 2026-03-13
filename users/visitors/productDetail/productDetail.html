@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details | Lucky Appliances</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/assets/icons/Logo Lucky Apliances.png" type="image/png">
+    <meta name="description" content="View detailed information about our premium appliance">
+    <meta name="author" content="Lucky Appliances">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://lucky-appliances.com/product-detail">
+    <meta property="og:title" content="Product Details | Lucky Appliances">
+    <meta property="og:description" content="Detailed information about our premium appliance">
+    <meta property="og:image" content="https://lucky-appliances.com/img/Logo-Lucky-Apliances.png">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Product Details | Lucky Appliances">
+    <meta name="twitter:description" content="Detailed information about our premium appliance">
+    
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS de product detail -->
+    <link rel="stylesheet" href="productDetail.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <script src="/components/navbar-visitor-component.js"></script>
+    <script src="/components/theme-manager.js"></script>
+
+    <div class="product-detail-page">
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb">
+            <div class="container">
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="../products/products.html">Products</a></li>
+                    <li><span id="breadcrumbProduct">Product Details</span></li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Product Detail -->
+        <main class="product-detail-main">
+            <div class="container">
+                <!-- Loading -->
+                <div id="loading" class="loading">
+                    <i class="fas fa-spinner"></i>
+                    <p>Loading product details...</p>
+                </div>
+
+                <!-- Product Not Found -->
+                <div id="productNotFound" class="not-found" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h2>Product Not Found</h2>
+                    <p>The product you're looking for doesn't exist or has been removed.</p>
+                    <a href="../products/products.html" class="btn-primary">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Products
+                    </a>
+                </div>
+
+                <!-- Product Detail Content -->
+                <div id="productDetailContent" style="display: none;">
+                    <!-- Product Header -->
+                    <div class="product-header">
+                        <div class="product-title-section">
+                            <h1 id="productTitle">Loading...</h1>
+                            <div class="product-meta">
+                                <span class="brand" id="productBrand">
+                                    <i class="fas fa-tag"></i> <span>Loading...</span>
+                                </span>
+                                <span class="category" id="productCategory">
+                                    <i class="fas fa-folder"></i> <span>Loading...</span>
+                                </span>
+                                <span class="sku" id="productSKU">
+                                    <i class="fas fa-barcode"></i> <span>Loading...</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="product-status">
+                            <div class="stock-badge" id="stockBadge">
+                                <i class="fas fa-check"></i> In Stock
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Product Main Content -->
+                    <div class="product-content">
+                        <!-- Left Column: Images -->
+                        <div class="product-images">
+                            <!-- Main Image -->
+                            <div class="main-image-container">
+                                <img id="mainImage" src="" alt="Product Image" loading="lazy">
+                                <div class="image-actions">
+                                    <button class="image-action-btn" id="zoomBtn">
+                                        <i class="fas fa-search-plus"></i>
+                                    </button>
+                                    <button class="image-action-btn" id="fullscreenBtn">
+                                        <i class="fas fa-expand"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Thumbnails -->
+                            <div class="thumbnails" id="thumbnailsContainer">
+                                <!-- Thumbnails will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- Center Column: Product Info -->
+                        <div class="product-info">
+                            <!-- Price Section -->
+                            <div class="price-section">
+                                <div class="price-display">
+                                    <span class="price-label">Unit Price:</span>
+                                    <span class="price-value" id="unitPrice">$0.00</span>
+                                </div>
+                            </div>
+
+                            <!-- Stock Info -->
+                            <div class="stock-info">
+                                <div class="stock-item">
+                                    <i class="fas fa-box"></i>
+                                    <div class="stock-details">
+                                        <span class="stock-label">Quantity Available:</span>
+                                        <span class="stock-value" id="stockQuantity">0</span>
+                                    </div>
+                                </div>
+                                <div class="stock-item">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <div class="stock-details">
+                                        <span class="stock-label">Location:</span>
+                                        <span class="stock-value" id="productLocation">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="description-section">
+                                <h3><i class="fas fa-align-left"></i> Description</h3>
+                                <p id="productDescription">Loading description...</p>
+                            </div>
+
+                            <!-- Specifications -->
+                            <div class="specifications-section">
+                                <h3><i class="fas fa-list-alt"></i> Specifications</h3>
+                                <div class="specs-grid" id="specsGrid">
+                                    <!-- Specifications will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Actions & Quick Info -->
+                        <div class="product-actions">
+                            <!-- Quick Actions -->
+                            <div class="quick-actions">
+                                <button class="action-btn primary" id="contactBtn">
+                                    <i class="fas fa-envelope"></i>
+                                    Contact About This Product
+                                </button>
+                                <button class="action-btn secondary" id="shareBtn">
+                                    <i class="fas fa-share-alt"></i>
+                                    Share Product
+                                </button>
+                                <button class="action-btn outline" onclick="window.history.back()">
+                                    <i class="fas fa-arrow-left"></i>
+                                    Back to Products
+                                </button>
+                            </div>
+
+                            <!-- Quick Stats -->
+                            <div class="quick-stats">
+                                <h4><i class="fas fa-chart-bar"></i> Quick Stats</h4>
+                                <div class="stats-grid">
+                                    <div class="stat-item">
+                                        <i class="fas fa-dollar-sign"></i>
+                                        <div>
+                                            <span class="stat-value" id="unitCost">$0.00</span>
+                                            <span class="stat-label">Unit Cost</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <i class="fas fa-percentage"></i>
+                                        <div>
+                                            <span class="stat-value" id="margin">0%</span>
+                                            <span class="stat-label">Margin</span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <i class="fas fa-weight"></i>
+                                        <div>
+                                            <span class="stat-value" id="productWeight">0 lbs</span>
+                                            <span class="stat-label">Weight</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tags -->
+                            <div class="product-tags">
+                                <h4><i class="fas fa-tags"></i> Product Tags</h4>
+                                <div class="tags-container" id="tagsContainer">
+                                    <!-- Tags will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Related Products -->
+        <section class="related-products" id="relatedProductsSection" style="display: none;">
+            <div class="container">
+                <div class="section-header">
+                    <h2><i class="fas fa-thumbs-up"></i> Related Products</h2>
+                    <p>You might also be interested in these products</p>
+                </div>
+
+                <!-- Related Products Tabs -->
+                <div class="related-tabs">
+                    <div class="tabs-header">
+                        <button class="tab-btn active" data-tab="same-category">
+                            <i class="fas fa-folder"></i> Same Category
+                        </button>
+                        <button class="tab-btn" data-tab="same-brand">
+                            <i class="fas fa-tag"></i> Same Brand
+                        </button>
+                    </div>
+
+                    <div class="tabs-content">
+                        <!-- Same Category Products -->
+                        <div class="tab-pane active" id="same-category">
+                            <div class="products-grid" id="sameCategoryProducts">
+                                <!-- Products will be loaded here -->
+                            </div>
+                            <div class="no-products" id="noCategoryProducts" style="display: none;">
+                                <i class="fas fa-folder-open"></i>
+                                <p>No other products in this category</p>
+                            </div>
+                        </div>
+
+                        <!-- Same Brand Products -->
+                        <div class="tab-pane" id="same-brand">
+                            <div class="products-grid" id="sameBrandProducts">
+                                <!-- Products will be loaded here -->
+                            </div>
+                            <div class="no-products" id="noBrandProducts" style="display: none;">
+                                <i class="fas fa-tag"></i>
+                                <p>No other products from this brand</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <script src="/components/footer-visitor-component.js"></script>
+
+        <!-- Floating Buttons -->
+        <script src="/components/float-buttons-component.js"></script>
+
+        <!-- Image Modal -->
+        <div class="image-modal" id="imageModal">
+            <div class="modal-content">
+                <button class="close-modal" id="closeModal">&times;</button>
+                <div class="modal-image-container">
+                    <img id="modalImage" src="" alt="Product Image">
+                </div>
+                <div class="modal-nav">
+                    <button class="modal-nav-btn" id="prevImage">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="image-counter" id="imageCounter">1 / 1</span>
+                    <button class="modal-nav-btn" id="nextImage">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- JavaScript de product detail -->
+    <script type="module" src="productDetail.js"></script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Appliances | Luxury Home Appliances</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/assets/icons/Logo Lucky Apliances.png" type="image/png">
+    <meta name="description" content="Premium home appliances: refrigerators, washers and more. Top brands like Samsung, LG and Miele.">
+    <meta name="keywords" content="premium appliances, luxury home appliances, refrigerators, washers, dryers, Samsung appliances, LG appliances, Miele appliances, high-end appliances">
+    <meta name="author" content="Lucky Appliances">
+    <link rel="canonical" href="https://lucky-appliances.com/" />
+    <!-- Open Graph / Facebook (WhatsApp, LinkedIn, Pinterest también lo usan) -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://lucky-appliances.com">
+    <meta property="og:title" content="Premium Appliances | Luxury Home Appliances">
+    <meta property="og:description" content="Premium home appliances: refrigerators, washers & more. Top brands like Samsung, LG, and Miele. Free delivery on orders over $999.">
+    <meta property="og:image" content="https://lucky-appliances.com/img/Logo-Lucky-Apliances.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="Lucky Appliances">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://lucky-appliances.com">
+    <meta name="twitter:title" content="Premium Appliances | Luxury Home Appliances">
+    <meta name="twitter:description" content="Premium home appliances: refrigerators, washers & more. Top brands like Samsung, LG, and Miele.">
+    <meta name="twitter:image" content="https://lucky-appliances.com/img/Logo-Lucky-Apliances.png">
+    <meta name="twitter:creator" content="@LuckyAppliances"> <!-- (Opcional) Tu @usuario de Twitter -->
+    <script type="application/ld+json">
+        {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        "name": "Lucky Appliances",
+        "image": "https://lucky-appliances.com/img/Logo-Lucky-Apliances.png",
+        "@id": "https://lucky-appliances.com",
+        "url": "https://lucky-appliances.com",
+        "telephone": "+1 (725) 300-1480",
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "3990 W Russell Rd Suite 6",
+            "addressLocality": "Las Vegas",
+            "addressRegion": "NV",
+            "postalCode": "89118",
+            "addressCountry": "US"
+        },
+        "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 36.0900,
+            "longitude": -115.2100
+        },
+        "openingHoursSpecification": {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday"
+            ],
+            "opens": "09:00",
+            "closes": "18:00"
+        },
+        "priceRange": "$$$"
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <!-- Inicio contenedor para carrusel de fotografias -->
+    <!-- El carrusel se creará automáticamente aquí -->
+        <div id="carousel-container" 
+            data-carousel
+            data-autoplay="true"
+            data-interval="5000"
+            data-dots="true"
+            data-arrows="true"
+            data-pause-on-hover="true"
+            data-height="500px"
+            data-mobile-height="300px">
+            <!-- El carrusel se creará automáticamente aquí -->
+        </div>
+    <!-- Fin contenedor para carrusel de fotografias -->    
+     <section id="brands" class="brands-section section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-subtitle">Our Partners</span>
+                <h2 class="section-title">Premium Brands</h2>
+                <div class="section-divider">
+                    <div class="divider-line"></div>
+                    <div class="divider-icon"><i class="fas fa-star"></i></div>
+                    <div class="divider-line"></div>
+                </div>
+                <p class="section-description">We partner with the world's most innovative appliance manufacturers to bring you exceptional quality</p>
+            </div>
+        </div>
+    </section>
+    <!-- Inicio contenedor para carrusel de de marcas -->
+        <div id="brand-carousel-container" 
+            data-brand-carousel
+            data-autoplay="true"
+            data-interval="7000"
+            data-items-per-view="6"
+            data-mobile-items-per-view="3"
+            data-max-brands="15"
+            data-height="180px">
+        </div>
+    <!-- Fin contenedor para carrusel de marcas --> 
+    <!-- Inicio contenedor para tarjetas de categorías -->
+        <div id="categories-container" 
+            data-category-cards
+            data-max-categories="6"
+            data-items-per-row="3"
+            data-mobile-items-per-row="1"
+            data-show-view-all="true"
+            data-theme-aware="true"
+            data-animation-delay="100"
+            data-height="320px"
+            data-mobile-height="280px">
+            <!-- Las categorías se cargarán automáticamente aquí -->
+        </div>
+    <!-- Fin contenedor para tarjetas de categorías -->
+    <!-- Inicio contenedor para comentarios -->
+        <div id="comments-carousel" 
+            data-comment-carousel
+            data-items-per-view="4"
+            data-mobile-items-per-view="1"
+            data-interval="10000"
+            data-max-text-length="200"
+            data-show-rating="true"
+            data-show-only-published="true">
+        </div>
+    <!-- Fin contenedor para comentarios -->
+    <script src="/components/carousel-component.js"></script>  
+    <script src="/components/brand-carousel-component.js"></script>
+    <script src="/components/category-cards-component.js"></script>
+    <script src="/components/comment-carrousel-component.js"></script>
+    <script src="/components/theme-manager.js"></script>
+    <script src="/components/navbar-visitor-component.js"></script>
+    <script src="/components/footer-visitor-component.js"></script>
+    <script src="/components/float-buttons-component.js"></script>
+    <script type="module" src="/index.js"></script>
+</body>
+</html>

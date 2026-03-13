@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Settings | Lucky Appliances</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/assets/icons/Logo Lucky Apliances.png" type="image/png">
+    <meta name="description" content="Manage your notification preferences at Lucky Appliances">
+    <meta name="author" content="Lucky Appliances">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://lucky-appliances.com/notifications">
+    <meta property="og:title" content="Notification Settings | Lucky Appliances">
+    <meta property="og:description" content="Manage your notification preferences at Lucky Appliances">
+    <meta property="og:image" content="https://lucky-appliances.com/img/Logo-Lucky-Apliances.png">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Notification Settings | Lucky Appliances">
+    <meta name="twitter:description" content="Manage your notification preferences">
+    
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="notification-settings.css">
+    
+</head>
+<body>
+    <!-- Navbar flotante se cargará aquí -->
+    <script src="/components/navbar-admin-component.js"></script>
+    <script src="/components/theme-manager.js"></script>
+
+    <div class="notification-container">
+        <!-- Notification Header -->
+        <header class="notification-header">
+            <h1><i class="fas fa-bell"></i> Notification Settings</h1>
+            <p>Manage your notification preferences and stay updated with the latest offers, order updates, and important announcements.</p>
+            <div class="user-badge" id="userInfo">Loading user information...</div>
+        </header>
+
+        <!-- Main Notification Card -->
+        <div class="notification-card">
+            <h2>
+                <i class="fas fa-sliders-h"></i>
+                Notification Preferences
+            </h2>
+
+            <!-- Notification Status -->
+            <div class="status-section" id="notificationStatus">
+                <!-- Status will be loaded dynamically -->
+            </div>
+
+            <!-- Notification Toggle -->
+            <div class="notification-toggle">
+                <div class="toggle-info">
+                    <div class="toggle-icon">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <div class="toggle-text">
+                        <h4>Push Notifications</h4>
+                        <p>Receive real-time updates about orders, promotions, and important announcements</p>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="notificationToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Token Information -->
+            <div class="token-info" id="tokenInfo">
+                <div class="token-header">
+                    <i class="fas fa-key"></i>
+                    <h4>Your Device Token</h4>
+                </div>
+                <div class="token-display" id="tokenDisplay">
+                    No token generated yet
+                </div>
+                <div class="token-actions">
+                    <button class="btn btn-secondary" id="copyTokenBtn" disabled>
+                        <i class="fas fa-copy"></i> Copy Token
+                    </button>
+                    <button class="btn btn-danger" id="deleteTokenBtn" disabled>
+                        <i class="fas fa-trash"></i> Delete Token
+                    </button>
+                </div>
+            </div>
+
+            <!-- Benefits Section -->
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <i class="fas fa-tag"></i>
+                    </div>
+                    <h4>Exclusive Offers</h4>
+                    <p>Get notified about special discounts and promotions</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <h4>Order Updates</h4>
+                    <p>Track your orders with real-time notifications</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <h4>New Arrivals</h4>
+                    <p>Be the first to know about new products</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Notification Activity -->
+        <div class="recent-activity">
+            <h2 class="stats-title" style="margin-bottom: 20px;">
+                <i class="fas fa-history"></i>
+                Recent Notification Activity
+            </h2>
+            <div id="recentActivity">
+                <!-- Activity will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts - SOLO LOS MÓDULOS, SIN SCRIPTS GLOBALES -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script type="module" src="notification-settings.js"></script>
+</body>
+</html>

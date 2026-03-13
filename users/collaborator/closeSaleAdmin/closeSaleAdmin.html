@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Close Sale | Lucky Appliances</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/assets/icons/Logo Lucky Apliances.png" type="image/png">
+    <meta name="description" content="Complete your sale">
+    <meta name="author" content="Lucky Appliances">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://lucky-appliances.com/close-sale">
+    <meta property="og:title" content="Close Sale | Lucky Appliances">
+    <meta property="og:description" content="Complete your sale transaction">
+
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../dashAdmin/dashAdmin.css">
+    <link rel="stylesheet" href="closeSaleAdmin.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <script src="/components/navbar-admin-component.js"></script>
+    <script src="/components/theme-manager.js"></script>
+
+    <div class="close-sale-container">
+        <!-- Header -->
+        <header class="sale-header">
+            <h1>
+                <i class="fas fa-check-circle"></i>
+                Complete Sale
+            </h1>
+            <div class="sale-number" id="saleNumber">Loading...</div>
+        </header>
+
+        <!-- Main Layout (Now in a single column) -->
+        <div class="sale-layout">
+
+            <!-- Panel 1: Products to sell -->
+            <section class="sale-section products-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-boxes"></i> Products to Sell</h2>
+                    <span id="productCount" class="item-count">0 items</span>
+                </div>
+                
+                <div id="loadingProducts" class="loading">
+                    <i class="fas fa-spinner"></i>
+                    <p>Loading products...</p>
+                </div>
+                
+                <div id="productsGrid" class="products-grid">
+                    <!-- Products will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Panel 2: Customer & Seller Information -->
+            <section class="sale-section customer-panel">
+                <h2 class="section-title"><i class="fas fa-user"></i> Customer & Seller Information</h2>
+                
+                <!-- Seller Information (Compact) -->
+                <div class="info-grid">
+                    <div class="info-card" id="sellerInfo">
+                        <h3><i class="fas fa-user-tie"></i> Seller</h3>
+                        <p><i class="fas fa-user"></i> <span id="sellerName">Loading...</span></p>
+                        <p><i class="fas fa-envelope"></i> <span id="sellerEmail">Loading...</span></p>
+                        <p><i class="fas fa-tag"></i> <span id="sellerRole">Loading...</span></p>
+                    </div>
+                    
+                    <div class="info-card datetime-info">
+                        <h3><i class="fas fa-clock"></i> Date & Time</h3>
+                        <p><i class="fas fa-calendar-alt"></i> <span id="currentDate">Loading...</span></p>
+                        <p><i class="fas fa-clock"></i> <span id="currentTime">Loading...</span></p>
+                    </div>
+                </div>
+
+                <!-- Customer Form -->
+                <div class="customer-form">
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label><i class="fas fa-user"></i> Customer Name *</label>
+                            <input type="text" id="customerName" class="form-control" placeholder="Full name" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fas fa-map-marker-alt"></i> Address</label>
+                            <input type="text" id="customerAddress" class="form-control" placeholder="Street and number">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-phone"></i> Phone</label>
+                            <input type="tel" id="customerPhone" class="form-control" placeholder="Contact number">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fas fa-envelope"></i> Email</label>
+                            <input type="email" id="customerEmail" class="form-control" placeholder="Email address">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Panel 3: Additional Charges & Tax -->
+            <section class="sale-section charges-panel">
+                <h2 class="section-title"><i class="fas fa-plus-circle"></i> Additional Charges & Tax</h2>
+                
+                <div class="charges-and-tax-container">
+                    <!-- Tax Section -->
+                    <div class="tax-section">
+                        <h3><i class="fas fa-percent"></i> Tax (VAT)</h3>
+                        <div class="tax-control">
+                            <label for="taxRate">Tax Rate:</label>
+                            <input type="number" id="taxRate" class="form-control tax-input" min="0" max="100" step="0.1" value="16">
+                            <span>%</span>
+                            <label class="tax-toggle">
+                                <input type="checkbox" id="applyTax" checked> Apply Tax
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Additional Charges Section -->
+                    <div class="additional-charges-section">
+                        <h3><i class="fas fa-receipt"></i> Additional Charges</h3>
+                        <div id="additionalChargesContainer" class="additional-charges-container">
+                            <!-- Charges will be added here dynamically -->
+                        </div>
+                        <button type="button" id="addChargeBtn" class="btn-add-charge">
+                            <i class="fas fa-plus"></i> Add Charge
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Panel 3.5: Terms & Conditions -->
+            <section class="sale-section terms-panel">
+                <h2 class="section-title"><i class="fas fa-file-contract"></i> Terms & Conditions</h2>
+                
+                <div class="terms-container">
+                    <div class="terms-header">
+                        <label class="terms-toggle">
+                            <input type="checkbox" id="applyCustomTerms" checked>
+                            <i class="fas fa-check-square"></i> Apply custom terms for this sale
+                        </label>
+                        <button type="button" id="resetTermsBtn" class="btn-reset-terms">
+                            <i class="fas fa-undo"></i> Reset to default
+                        </button>
+                    </div>
+                    
+                    <div class="terms-editor">
+                        <textarea id="termsText" class="terms-textarea" rows="12">
+            1. All items are covered by a 90 day warranty and there are new or open box.
+            2. Our warranty does not cover any damage caused during self-installation.
+            3. If the customer hired a technician that is not affiliated with Lucky Appliances, we are not responsible for damages caused during installation.
+            4. Our Warranty does not cover any damage that occurs during transportation by someone other than our technicians. For example if the customer decides to transport items in their own vehicle.
+            5. Lucky Appliances will only issue an exchange or return if there is a technical issue with the item or was dented/scratched by our technician.
+            6. After 3 months of keeping items on hold we are not responsible for damages.
+            7. Restocking fee applies for any returning item, often when the return is for reasons other than product defect or damages.
+            8. All sales are final.
+                        </textarea>
+                    </div>
+                    
+                    <div class="terms-preview">
+                        <h3><i class="fas fa-eye"></i> Preview</h3>
+                        <div id="termsPreview" class="terms-preview-content"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Panel 4: Summary & Actions -->
+            <section class="sale-section summary-panel">
+                <h2 class="section-title"><i class="fas fa-calculator"></i> Summary & Actions</h2>
+                
+                <!-- Sale Summary -->
+                <div class="sale-summary">
+                    <div class="summary-row">
+                        <span>Products Subtotal:</span>
+                        <span id="summaryProductsSubtotal">$0.00</span>
+                    </div>
+                    <div id="chargesSummaryContainer">
+                        <!-- Dynamic charges will be added here via JS -->
+                    </div>
+                    <div class="summary-row subtotal">
+                        <span>Subtotal:</span>
+                        <span id="summarySubtotal">$0.00</span>
+                    </div>
+                    <div class="summary-row tax-row" id="taxRow">
+                        <span>VAT (<span id="taxRateDisplay">16</span>%):</span>
+                        <span id="summaryTax">$0.00</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Total:</span>
+                        <span id="summaryTotal">$0.00</span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <button class="btn-back" id="backBtn">
+                    <i class="fas fa-arrow-left"></i> Back to POS
+                </button>
+                <button class="btn-complete" id="completeSaleBtn" disabled>
+                    <i class="fas fa-check-circle"></i> Complete Sale
+                </button>
+            </section>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script type="module" src="closeSaleAdmin.js"></script>
+    <script src="/components/footer-admin-component.js"></script>
+</body>
+</html>

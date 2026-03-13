@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <title>Manage Carousel | Lucky Appliances</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/assets/icons/Logo Lucky Apliances.png" type="image/png">
+    <meta name="description" content="Lucky Appliances Admin Dashboard - Manage products, categories, brands and more">
+    <meta name="author" content="Lucky Appliances">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://lucky-appliances.com/admin">
+    <meta property="og:title" content="Admin Dashboard | Lucky Appliances">
+    <meta property="og:description" content="Manage your appliance store inventory and content">
+    <meta property="og:image" content="https://lucky-appliances.com/img/Logo-Lucky-Apliances.png">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Admin Dashboard | Lucky Appliances">
+    <meta name="twitter:description" content="Manage your appliance store inventory and content">
+    
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="../dashAdmin/dashAdmin.css">
+    <link rel="stylesheet" href="carouselAdmin.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <script src="/components/navbar-admin-component.js"></script>
+    <script src="/components/theme-manager.js"></script>
+
+    <div class="dashboard-container carousel-admin-container">
+        <!-- Header -->
+        <header class="carousel-header">
+            <div>
+                <h1>
+                    <i class="fas fa-images"></i>
+                    Manage Carousel
+                </h1>
+                <p class="header-description">Manage images for the main carousel</p>
+            </div>
+            
+            <div class="header-info">
+                <div class="item-count">
+                    <i class="fas fa-layer-group"></i>
+                    <span id="itemCount">0</span> images
+                </div>
+                
+                <button id="addBtn" class="btn-primary">
+                    <i class="fas fa-plus-circle"></i>
+                    New Image
+                </button>
+            </div>
+        </header>
+
+        <!-- Loading -->
+        <div id="loading" class="loading">
+            <i class="fas fa-spinner"></i>
+            <p>Loading images...</p>
+        </div>
+
+        <!-- Image Grid -->
+        <div id="carouselContainer" class="carousel-grid">
+            <!-- Images will be loaded here dynamically -->
+        </div>
+    </div>
+
+    <!-- Form Overlay -->
+    <div id="formOverlay" class="form-overlay"></div>
+
+    <!-- Form (initially hidden) -->
+    <div id="formContainer" class="form-container">
+        <div class="form-header">
+            <h2 id="formTitle">
+                <i class="fas fa-image"></i>
+                Add Image
+            </h2>
+            <button id="cancelBtn" class="btn-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="form-content">
+            <form id="carouselForm">
+                <input type="hidden" id="itemId">
+                
+                <div class="form-group">
+                    <label for="nombre">
+                        <i class="fas fa-heading"></i>
+                        Name *
+                    </label>
+                    <input type="text" 
+                           id="nombre" 
+                           class="form-control" 
+                           placeholder="Example: Summer Sale 2024"
+                           required
+                           maxlength="100">
+                    <small class="form-hint">Descriptive name to identify this image</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="descripcion">
+                        <i class="fas fa-align-left"></i>
+                        Description
+                    </label>
+                    <textarea id="descripcion" 
+                              class="form-control" 
+                              placeholder="Description that will appear with the image (optional)"
+                              rows="4"
+                              maxlength="500"></textarea>
+                    <small class="form-hint">Maximum 500 characters</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="imageInput">
+                        <i class="fas fa-image"></i>
+                        Image *
+                    </label>
+                    <div class="image-upload">
+                        <input type="file" 
+                               id="imageInput" 
+                               class="form-control"
+                               accept="image/*"
+                               required>
+                        <small class="form-hint">Formats: JPG, PNG, GIF, WebP (max. 5MB)</small>
+                    </div>
+                    
+                    <div id="imagePreview" class="image-preview">
+                        <i class="fas fa-image"></i>
+                        <span>Image preview</span>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" id="submitBtn" class="btn-submit">
+                        <i class="fas fa-save"></i>
+                        Save
+                    </button>
+                    <button type="button" id="cancelBtn2" class="btn-cancel">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Main Script -->
+    <script type="module" src="./carouselAdmin.js"></script>
+    <script src="/components/footer-admin-component.js"></script>
+</body>
+</html>

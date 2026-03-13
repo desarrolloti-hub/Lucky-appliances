@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Manage Brands | Lucky Appliances</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/assets/icons/Logo Lucky Apliances.png" type="image/png">
+    <meta name="description" content="Lucky Appliances Admin Dashboard - Manage brands">
+    <meta name="author" content="Lucky Appliances">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://lucky-appliances.com/admin/brands">
+    <meta property="og:title" content="Brand Management | Lucky Appliances">
+    <meta property="og:description" content="Manage brands for your appliance store">
+    <meta property="og:image" content="https://lucky-appliances.com/img/Logo-Lucky-Apliances.png">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Brand Management | Lucky Appliances">
+    <meta name="twitter:description" content="Manage brands for your appliance store">
+    
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="../dashAdmin/dashAdmin.css">
+    <link rel="stylesheet" href="brandAdmin.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <script src="/components/navbar-admin-component.js"></script>
+    <script src="/components/theme-manager.js"></script>
+
+    <div class="dashboard-container brand-admin-container">
+        <!-- Header -->
+        <header class="brand-header">
+            <div>
+                <h1>
+                    <i class="fas fa-tags"></i>
+                    Manage Brands
+                </h1>
+                <p class="header-description">Manage appliance brands for your store</p>
+            </div>
+            
+            <div class="header-info">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" 
+                           id="searchInput" 
+                           placeholder="Search brands..."
+                           class="search-input">
+                </div>
+                
+                <div class="item-count">
+                    <i class="fas fa-layer-group"></i>
+                    <span id="itemCount">0</span> brands
+                </div>
+                
+                <button id="addBtn" class="btn-primary">
+                    <i class="fas fa-plus-circle"></i>
+                    New Brand
+                </button>
+            </div>
+        </header>
+
+        <!-- Loading -->
+        <div id="loading" class="loading">
+            <i class="fas fa-spinner"></i>
+            <p>Loading brands...</p>
+        </div>
+
+        <!-- Brand Grid -->
+        <div id="brandContainer" class="brand-grid">
+            <!-- Brands will be loaded here dynamically -->
+        </div>
+    </div>
+
+    <!-- Form Overlay -->
+    <div id="formOverlay" class="form-overlay"></div>
+
+    <!-- Form (initially hidden) -->
+    <div id="formContainer" class="form-container">
+        <div class="form-header">
+            <h2 id="formTitle">
+                <i class="fas fa-tag"></i>
+                Add Brand
+            </h2>
+            <button id="cancelBtn" class="btn-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="form-content">
+            <form id="brandForm">
+                <input type="hidden" id="itemId">
+                
+                <div class="form-group">
+                    <label for="nombre">
+                        <i class="fas fa-font"></i>
+                        Brand Name *
+                    </label>
+                    <input type="text" 
+                           id="nombre" 
+                           class="form-control" 
+                           placeholder="Example: Samsung, LG, Whirlpool"
+                           required
+                           maxlength="50">
+                    <small class="form-hint">Enter the brand name (max 50 characters)</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="imageInput">
+                        <i class="fas fa-image"></i>
+                        Brand Logo
+                    </label>
+                    <div class="image-upload">
+                        <input type="file" 
+                               id="imageInput" 
+                               class="form-control"
+                               accept="image/*">
+                        <small class="form-hint">Recommended: Square logo, transparent background (max 2MB)</small>
+                    </div>
+                    
+                    <div id="imagePreview" class="image-preview">
+                        <i class="fas fa-image"></i>
+                        <span>Logo preview</span>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" id="submitBtn" class="btn-submit">
+                        <i class="fas fa-save"></i>
+                        Save Brand
+                    </button>
+                    <button type="button" id="cancelBtn2" class="btn-cancel">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Main Script -->
+    <script type="module" src="./brandAdmin.js"></script>
+    <script src="/components/footer-admin-component.js"></script>
+</body>
+</html>

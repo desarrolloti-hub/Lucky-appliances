@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Point of Sale (POS) | Lucky Appliances</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/assets/icons/Logo Lucky Apliances.png" type="image/png">
+    <meta name="description" content="Lucky Appliances POS - Point of Sale System">
+    <meta name="author" content="Lucky Appliances">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://lucky-appliances.com/pos">
+    <meta property="og:title" content="Point of Sale | Lucky Appliances">
+    <meta property="og:description" content="Point of Sale system for your appliance store">
+    <meta property="og:image" content="https://lucky-appliances.com/img/Logo-Lucky-Apliances.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Point of Sale | Lucky Appliances">
+    <meta name="twitter:description" content="Point of Sale system">
+
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="/dashAdmin/dashAdmin.css">
+    <link rel="stylesheet" href="posAdmin.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <script src="/components/navbar-admin-component.js"></script>
+    <script src="/components/theme-manager.js"></script>
+
+    <div class="pos-container">
+        <!-- POS Header -->
+        <header class="pos-header">
+            <h1>
+                <i class="fas fa-cash-register"></i>
+                Point of Sale
+            </h1>
+            <div class="header-info">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="posSearchInput" placeholder="Search by model, SKU, ID..." class="search-input">
+                </div>
+                <div class="item-count">
+                    <i class="fas fa-boxes"></i>
+                    <span id="productCount">0</span> products found
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Layout: Products and Cart -->
+        <div class="pos-layout">
+            <!-- Left Panel: Product List (ahora más pequeño) -->
+            <div class="products-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-tag"></i> Product Results</h2>
+                </div>
+                <div id="posLoading" class="loading">
+                    <i class="fas fa-spinner"></i>
+                    <p>Loading products...</p>
+                </div>
+                <div id="productGrid" class="product-grid">
+                    <!-- Products will be loaded here dynamically -->
+                </div>
+            </div>
+
+            <!-- Right Panel: Shopping Cart -->
+            <div class="cart-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-shopping-cart"></i> Cart</h2>
+                    <button id="clearCartBtn" class="btn-clear" title="Clear cart" style="display: none;">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+
+                <!-- Barcode Scanner (corregido) -->
+                <div class="barcode-scanner">
+                    <div class="barcode-input-wrapper">
+                        <i class="fas fa-barcode"></i>
+                        <input type="text" 
+                            id="barcodeInput" 
+                            class="barcode-input" 
+                            placeholder="Scan barcode or enter serial..." 
+                            autocomplete="off">
+                        <button id="addBarcodeBtn" class="barcode-add-btn" title="Add product">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div id="barcodeFeedback" class="barcode-feedback"></div>
+                </div>
+
+                <!-- Cart items list -->
+                <div id="cartItems" class="cart-items">
+                    <!-- Items will be added here dynamically -->
+                </div>
+
+                <!-- Summary and Total -->
+                <div class="cart-summary" style="display: none;">
+                    <div class="summary-row">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">$0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Tax (16%):</span>
+                        <span id="tax">$0.00</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Total:</span>
+                        <span id="total">$0.00</span>
+                    </div>
+                </div>
+
+                <!-- Checkout button (solo uno) -->
+                <button id="checkoutBtn" class="btn-checkout" disabled>
+                    <i class="fas fa-check-circle"></i> Complete Sale
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Main Script -->
+    <script type="module" src="posAdmin.js"></script>
+    <script src="/components/footer-admin-component.js"></script>
+</body>
+</html>
