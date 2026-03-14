@@ -113,7 +113,7 @@ export async function setupNotifications() {
             console.log('ℹ️ Notificaciones no soportadas');
             return false;
         }
-        
+        //comentario
         return true;
     } catch (error) {
         console.error('Error configurando notificaciones:', error);
