@@ -28,12 +28,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="/dashAdmin/dashAdmin.css">
-    <link rel="stylesheet" href="providerAdmin.css">
+    <link rel="stylesheet" href="/users/administrator/providerAdmin/providerAdmin.css">
 </head>
 <body>
     <!-- Navbar -->
-    <script src="/components/navbar-admin-component.js"></script>
+    <script src="/components/navbar-collaborator-component.js"></script>
     <script src="/components/theme-manager.js"></script>
 
     <div class="dashboard-container provider-admin-container">
@@ -183,9 +182,9 @@
 
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+    <script src="/components/protect-page-component.js" data-module="suppliers"></script>
     <!-- Main Script -->
-    <script type="module" src="./providerAdmin.js"></script>
+    <script type="module" src="/users/administrator/providerAdmin/providerAdmin.js"></script>
     <script src="/components/footer-admin-component.js"></script>
 </body>
 </html>

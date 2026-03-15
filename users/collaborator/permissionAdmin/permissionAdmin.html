@@ -29,11 +29,11 @@
     
     <!-- Styles -->
     <link rel="stylesheet" href="../dashAdmin/dashAdmin.css">
-    <link rel="stylesheet" href="permissionAdmin.css">
+    <link rel="stylesheet" href="/users/administrator/permissionAdmin/permissionAdmin.css">
 </head>
 <body>
     <!-- Navbar -->
-    <script src="/components/navbar-admin-component.js"></script>
+    <script src="/components/navbar-collaborator-component.js"></script>
     <script src="/components/theme-manager.js"></script>
 
     <div class="dashboard-container permission-admin-container">
@@ -142,9 +142,9 @@
 
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+    <script src="/components/protect-page-component.js" data-module="permissions"></script>
     <!-- Main Script -->
-    <script type="module" src="./permissionAdmin.js"></script>
+    <script type="module" src="/users/administrator/permissionAdmin/permissionAdmin.js"></script>
     <script src="/components/footer-admin-component.js"></script>
 </body>
 </html>
