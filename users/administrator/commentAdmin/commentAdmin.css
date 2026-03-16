@@ -29,17 +29,14 @@
 }
 
 :root.dark-mode {
-    --primary: #1a365d;
-    --primary-light: #2d4a7d;
-    --accent: #f5d742;
-    --accent-dark: #e5c730;
-    --accent-light: #f8e472;
-    --light: #2d3748;
-    --white: #1a253a;
-    --gray: #4a5568;
-    --dark-gray: #2d3748;
-    --text: #e2e8f0;
-    --text-light: #a0aec0;
+    --primary: #f5d742;
+    --primary-light: #e5c730;
+    --primary-dark: #0a2540;
+            --accent: #1a365d;
+            --accent-dark: #e5c730;
+            --accent-light: #fff5b8;
+            --text: #e2e8f0;
+            --text-light: #a0aec0;
     
     --unread-bg: #3b82f6;
     --read-bg: #94a3b8;

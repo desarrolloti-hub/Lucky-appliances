@@ -11,8 +11,11 @@ import { doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com
 // Variables globales
 let isSubmitting = false;
 
-// Ruta del dashboard
-const DASHBOARD_PATH = '/users/administrator/dashAdmin/dashAdmin.html';
+// Rutas según rol
+const ROUTES = {
+    ADMIN: '/users/administrator/dashAdmin/dashAdmin.html',
+    COLLABORATOR: '/users/collaborator/dashboardGeneral/dashboardGeneral.html'
+};
 
 // Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', async function() {
@@ -167,6 +170,21 @@ function validateForm() {
     return emailValid && passwordValid;
 }
 
+// Obtener ruta según rol
+function getRouteByRole(role) {
+    if (!role) {
+        return null; // Usuario sin rol
+    }
+    
+    const roleLower = role.toLowerCase();
+    
+    if (roleLower === 'admin') {
+        return ROUTES.ADMIN;
+    } else {
+        return ROUTES.COLLABORATOR; // Cualquier otro rol va a collaborator
+    }
+}
+
 // Manejar inicio de sesión con email/contraseña
 async function handleLogin(e) {
     e.preventDefault();
@@ -225,11 +243,108 @@ async function handleLogin(e) {
                 // Limpiar localStorage por seguridad
                 localStorage.removeItem('currentUser');
                 localStorage.removeItem('isLoggedIn');
-                localStorage.removeItem('adminUser'); // Limpiar también adminUser
+                localStorage.removeItem('adminUser');
                 
                 setSubmittingState(false);
                 return;
             }
+            
+            // VERIFICAR SI EL USUARIO TIENE ROL
+            if (!userData.role) {
+                // Usuario sin rol - cerrar sesión y mostrar error
+                await auth.signOut();
+                
+                await Swal.fire({
+                    icon: 'error',
+                    title: '<div style="color: #dc3545;"><i class="fas fa-exclamation-triangle"></i> Access Denied</div>',
+                    html: `
+                        <div style="text-align: center; padding: 10px 0;">
+                            <p style="color: #666; margin-bottom: 15px; font-size: 0.95rem;">
+                                Your account does not have an assigned role.
+                            </p>
+                            <p style="color: #6c757d; font-size: 0.85rem;">
+                                <i class="fas fa-info-circle"></i> 
+                                Please contact your administrator to assign you a role.
+                            </p>
+                        </div>
+                    `,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#f5d742',
+                    showCancelButton: false
+                });
+                
+                // Limpiar localStorage por seguridad
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('adminUser');
+                
+                setSubmittingState(false);
+                return;
+            }
+        } else {
+            // Usuario no existe en Firestore - cerrar sesión y mostrar error
+            await auth.signOut();
+            
+            await Swal.fire({
+                icon: 'error',
+                title: '<div style="color: #dc3545;"><i class="fas fa-exclamation-triangle"></i> Account Not Found</div>',
+                html: `
+                    <div style="text-align: center; padding: 10px 0;">
+                        <p style="color: #666; margin-bottom: 15px; font-size: 0.95rem;">
+                            Your account is not properly configured in the system.
+                        </p>
+                        <p style="color: #6c757d; font-size: 0.85rem;">
+                            <i class="fas fa-info-circle"></i> 
+                            Please contact your administrator for assistance.
+                        </p>
+                    </div>
+                `,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#f5d742',
+                showCancelButton: false
+            });
+            
+            // Limpiar localStorage por seguridad
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('adminUser');
+            
+            setSubmittingState(false);
+            return;
+        }
+        
+        // Determinar ruta según el rol
+        const destinationRoute = getRouteByRole(userData.role);
+        
+        if (!destinationRoute) {
+            // Esto no debería ocurrir porque ya validamos que tenga rol, pero por seguridad
+            await auth.signOut();
+            
+            await Swal.fire({
+                icon: 'error',
+                title: '<div style="color: #dc3545;"><i class="fas fa-exclamation-triangle"></i> Invalid Role</div>',
+                html: `
+                    <div style="text-align: center; padding: 10px 0;">
+                        <p style="color: #666; margin-bottom: 15px; font-size: 0.95rem;">
+                            Your account has an invalid role: ${userData.role}
+                        </p>
+                        <p style="color: #6c757d; font-size: 0.85rem;">
+                            <i class="fas fa-info-circle"></i> 
+                            Please contact your administrator.
+                        </p>
+                    </div>
+                `,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#f5d742',
+                showCancelButton: false
+            });
+            
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('adminUser');
+            
+            setSubmittingState(false);
+            return;
         }
         
         // Guardar datos del usuario en localStorage
@@ -241,12 +356,13 @@ async function handleLogin(e) {
         // Actualizar último login en Firestore
         await updateLastLogin(user.uid);
         
-        // Mostrar mensaje de éxito
-        showSuccess('Login successful! Redirecting...');
+        // Mostrar mensaje de éxito con el rol
+        const roleDisplay = userData.role === 'admin' ? 'Administrator' : 'Collaborator';
+        showSuccess(`Login successful! Redirecting to ${roleDisplay} dashboard...`);
         
-        // Redirigir al dashboard después de 1.5 segundos
+        // Redirigir según el rol después de 1.5 segundos
         setTimeout(() => {
-            window.location.href = DASHBOARD_PATH;
+            window.location.href = destinationRoute;
         }, 1500);
         
     } catch (error) {
@@ -304,11 +420,11 @@ function saveUserToLocalStorage(user, userData = null) {
                 lastSignInTime: user.metadata.lastSignInTime
             },
             lastLogin: new Date().toISOString(),
-            // Datos adicionales de Firestore - INCLUIR fullName Y photo
+            // Datos adicionales de Firestore
             fullName: userData?.fullName || user.displayName || user.email.split('@')[0],
             photo: userData?.photo || user.photoURL || null,
-            active: userData?.active !== false, // default true si no existe
-            role: userData?.role || 'user'
+            active: userData?.active !== false,
+            role: userData?.role || null // Guardar el rol explícitamente
         };
         
         // Guardar en localStorage con DOS CLAVES para compatibilidad
@@ -319,17 +435,14 @@ function saveUserToLocalStorage(user, userData = null) {
         localStorage.setItem('adminUser', JSON.stringify({
             uid: user.uid,
             email: user.email,
-            displayName: userInfo.fullName, // Usar fullName como displayName
-            photoURL: userInfo.photo, // Usar photo como photoURL
+            displayName: userInfo.fullName,
+            photoURL: userInfo.photo,
             fullName: userInfo.fullName,
-            photo: userInfo.photo
+            photo: userInfo.photo,
+            role: userInfo.role // Incluir rol también aquí
         }));
         
-        console.log('User saved to localStorage:', {
-            fullName: userInfo.fullName,
-            photo: userInfo.photo ? 'base64 string present' : 'not present',
-            uid: userInfo.uid
-        });
+        console.log('User saved to localStorage with role:', userInfo.role);
         
     } catch (error) {
         console.error('Error saving user to localStorage:', error);
@@ -389,14 +502,29 @@ async function checkAuthStatus() {
         if (isLoggedIn) {
             const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
             
-            // Verificar que el usuario aún exista en Firebase
-            if (currentUser.uid && auth.currentUser) {
-                console.log('User already logged in, redirecting to dashboard...');
+            // Verificar que el usuario aún exista en Firebase y tenga rol
+            if (currentUser.uid && auth.currentUser && currentUser.role) {
+                console.log('User already logged in with role:', currentUser.role);
                 
-                // Redirigir al dashboard después de un breve delay
-                setTimeout(() => {
-                    window.location.href = DASHBOARD_PATH;
-                }, 500);
+                // Determinar ruta según el rol guardado
+                const destinationRoute = getRouteByRole(currentUser.role);
+                
+                if (destinationRoute) {
+                    // Redirigir al dashboard correspondiente
+                    setTimeout(() => {
+                        window.location.href = destinationRoute;
+                    }, 500);
+                } else {
+                    // Si no tiene rol válido, limpiar sesión
+                    localStorage.removeItem('currentUser');
+                    localStorage.removeItem('isLoggedIn');
+                    localStorage.removeItem('adminUser');
+                }
+            } else {
+                // Si no tiene datos completos, limpiar sesión
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('adminUser');
             }
         }
     } catch (error) {
@@ -507,7 +635,6 @@ async function showForgotPasswordDialog() {
                 const emailInput = Swal.getPopup().querySelector('#swal-email');
                 const email = emailInput?.value.trim();
                 
-                // Validate email format only (no existence check)
                 if (!email) {
                     Swal.showValidationMessage('Email is required');
                     return false;
@@ -524,9 +651,7 @@ async function showForgotPasswordDialog() {
             allowOutsideClick: () => !Swal.isLoading()
         });
 
-        // If email was submitted successfully
         if (email) {
-            // Show loading while sending email
             Swal.fire({
                 title: 'Sending reset link...',
                 text: 'Please wait while we send the password reset email',
@@ -537,13 +662,10 @@ async function showForgotPasswordDialog() {
             });
             
             try {
-                // Try to send password reset email (Firebase will handle non-existent emails gracefully)
                 await sendPasswordResetEmail(auth, email);
                 
-                // Close loading dialog
                 Swal.close();
                 
-                // Show success message (always show same message for security)
                 await Swal.fire({
                     icon: 'success',
                     title: '<div style="color: #28a745;"><i class="fas fa-check-circle"></i> Email Sent!</div>',
@@ -569,7 +691,6 @@ async function showForgotPasswordDialog() {
                 console.error('Password reset error:', error);
                 Swal.close();
                 
-                // Show generic error message for security
                 await Swal.fire({
                     icon: 'info',
                     title: '<div style="color: #17a2b8;"><i class="fas fa-info-circle"></i> Check Your Email</div>',
@@ -596,37 +717,17 @@ async function showForgotPasswordDialog() {
     }
 }
 
-// Get user-friendly error message for password reset
-function getPasswordResetErrorMessage(error) {
-    switch (error.code) {
-        case 'auth/invalid-email':
-            return 'Invalid email address format. Please check the email and try again.';
-        case 'auth/too-many-requests':
-            return 'Too many password reset attempts. Please wait a few minutes and try again.';
-        case 'auth/network-request-failed':
-            return 'Network error. Please check your internet connection and try again.';
-        case 'auth/operation-not-allowed':
-            return 'Password reset is not enabled. Please contact your administrator.';
-        default:
-            // Don't reveal specific errors for security
-            return 'If an account exists with this email, you will receive a password reset link.';
-    }
-}
-
 // Función para cerrar sesión (para uso global)
 window.logoutUser = async function() {
     try {
-        // Cerrar sesión en Firebase
         await auth.signOut();
         
-        // Limpiar localStorage
         localStorage.removeItem('currentUser');
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('savedCredentials');
         localStorage.removeItem('pushSubscription');
-        localStorage.removeItem('adminUser'); // Limpiar también adminUser
+        localStorage.removeItem('adminUser');
         
-        // Redirigir a login
         window.location.href = '/visitor/login/login.html';
         
     } catch (error) {
@@ -648,6 +749,12 @@ window.getCurrentUser = function() {
 // Función para verificar autenticación (para uso global)
 window.isAuthenticated = function() {
     return localStorage.getItem('isLoggedIn') === 'true' && window.getCurrentUser() !== null;
+};
+
+// Función para obtener el rol del usuario actual
+window.getUserRole = function() {
+    const user = window.getCurrentUser();
+    return user?.role || null;
 };
 
 // Exportar funciones si se necesita

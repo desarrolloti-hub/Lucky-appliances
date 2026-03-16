@@ -410,7 +410,7 @@
             
             .dark-mode .footer-social a:hover {
                 background-color: var(--accent, #f5d742) !important;
-                color: var(--primary-dark, #061a2d) !important;
+                color: var(--accent-dark, #061a2d) !important;
             }
             
             /* ====== ESTILOS PARA PÁGINAS COMUNES ====== */
@@ -491,7 +491,7 @@
             
             /* Badges y tags */
             .dark-mode .badge-primary {
-                background-color: var(--primary) !important;
+                background-color: var(--accent) !important;
                 color: var(--white) !important;
             }
             
@@ -547,7 +547,7 @@
             
             /* Títulos */
             .swal2-title {
-                color: var(--primary) !important;
+                color: var(--accent) !important;
                 font-size: 1.5rem !important;
                 font-weight: 600 !important;
                 margin-bottom: 1rem !important;
@@ -589,14 +589,14 @@
             
             /* Botón principal */
             .swal2-confirm {
-                background-color: var(--primary) !important;
-                border-color: var(--primary) !important;
+                background-color: var(--accent) !important;
+                border-color: var(--accent) !important;
                 color: var(--white) !important;
             }
             
             .swal2-confirm:hover {
-                background-color: var(--primary-light) !important;
-                border-color: var(--primary-light) !important;
+                background-color: var(--accent-light) !important;
+                border-color: var(--accent-light) !important;
                 transform: translateY(-2px) !important;
                 box-shadow: 0 4px 12px rgba(10, 37, 64, 0.3) !important;
             }
@@ -710,8 +710,8 @@
             
             /* Icono pregunta */
             .swal2-icon.swal2-question {
-                border-color: var(--primary) !important;
-                color: var(--primary) !important;
+                border-color: var(--accent) !important;
+                color: var(--accent) !important;
             }
             
             /* Inputs */
@@ -796,14 +796,14 @@
             }
             
             .dark-mode .swal2-confirm {
-                background-color: var(--primary) !important;
-                border-color: var(--primary) !important;
+                background-color: var(--accent) !important;
+                border-color: var(--accent) !important;
                 color: var(--white) !important;
             }
             
             .dark-mode .swal2-confirm:hover {
-                background-color: var(--primary-light) !important;
-                border-color: var(--primary-light) !important;
+                background-color: var(--accent-light) !important;
+                border-color: var(--accent-light) !important;
             }
             
             .dark-mode .swal2-cancel {

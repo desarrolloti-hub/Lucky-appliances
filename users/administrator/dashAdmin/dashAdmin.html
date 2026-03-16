@@ -36,8 +36,13 @@
     <div class="dashboard-container">
         <!-- Dashboard Header -->
         <header class="dashboard-header">
-            <h1>Admin Dashboard</h1>
-            <p>Welcome to Lucky Appliances Administration Panel. Manage your products, categories, brands, and more from this centralized dashboard.</p>
+            <div class="header-content">
+                <h1>
+                    <i class="fas fa-crown"></i>
+                    Admin Dashboard
+                </h1>
+                <p>Welcome to Lucky Appliances Administration Panel. As an administrator, you have full access to all system modules.</p>
+            </div>
             <div class="welcome-badge" id="welcomeUser">Welcome, Administrator</div>
         </header>
 
@@ -52,129 +57,20 @@
             </div>
         </section>
 
-        <!-- Quick Actions Section -->
+        <!-- All Modules Section -->
         <section class="quick-actions-section">
             <h2 class="stats-title">
-                <i class="fas fa-rocket"></i>
-                Quick Actions
+                <i class="fas fa-cubes"></i>
+                All System Modules
             </h2>
-            <div class="actions-grid">
-                <!-- Products -->
-                <a href="../productAdmin/productAdmin.html" class="action-card">
-                    <div class="action-header">
-                        <div class="action-icon">
-                            <i class="fas fa-box"></i>
-                        </div>
-                        <h3 class="action-title">Products Management</h3>
-                    </div>
-                    <p class="action-description">Add, edit, delete, and manage all products in your inventory. Update prices, descriptions, and images.</p>
-                    <span class="action-badge">Inventory Control</span>
-                    <div class="action-cta">
-                        <span>Manage Products</span>
-                        <i class="fas fa-arrow-right"></i>
-                    </div>
-                </a>
-
-                <!-- Categories -->
-                <a href="../categoryAdmin/categoryAdmin.html" class="action-card">
-                    <div class="action-header">
-                        <div class="action-icon">
-                            <i class="fas fa-tags"></i>
-                        </div>
-                        <h3 class="action-title">Categories</h3>
-                    </div>
-                    <p class="action-description">Organize products into categories and subcategories. Manage category hierarchy and visibility.</p>
-                    <span class="action-badge">Organization</span>
-                    <div class="action-cta">
-                        <span>Manage Categories</span>
-                        <i class="fas fa-arrow-right"></i>
-                    </div>
-                </a>
-
-                <!-- Brands -->
-                <a href="../brandAdmin/brandAdmin.html" class="action-card">
-                    <div class="action-header">
-                        <div class="action-icon">
-                            <i class="fas fa-brands fa-apple"></i>
-                        </div>
-                        <h3 class="action-title">Brands Management</h3>
-                    </div>
-                    <p class="action-description">Add and manage appliance brands. Upload brand logos and organize products by manufacturer.</p>
-                    <span class="action-badge">Brand Control</span>
-                    <div class="action-cta">
-                        <span>Manage Brands</span>
-                        <i class="fas fa-arrow-right"></i>
-                    </div>
-                </a>
-
-                <!-- Comments -->
-                <a href="../commentAdmin/commentAdmin.html" class="action-card">
-                    <div class="action-header">
-                        <div class="action-icon">
-                            <i class="fas fa-comments"></i>
-                        </div>
-                        <h3 class="action-title">Comments</h3>
-                    </div>
-                    <p class="action-description">Moderate user comments on products. Approve, edit, or delete customer feedback.</p>
-                    <span class="action-badge">Moderation</span>
-                    <div class="action-cta">
-                        <span>Manage Comments</span>
-                        <i class="fas fa-arrow-right"></i>
-                    </div>
-                </a>
-
-                <!-- Reviews -->
-                <a href="../commentAdmin/commentAdmin.html" class="action-card">
-                    <div class="action-header">
-                        <div class="action-icon">
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <h3 class="action-title">Product Reviews</h3>
-                    </div>
-                    <p class="action-description">Monitor and manage customer reviews. Respond to feedback and maintain product ratings.</p>
-                    <span class="action-badge">Customer Feedback</span>
-                    <div class="action-cta">
-                        <span>Manage Reviews</span>
-                        <i class="fas fa-arrow-right"></i>
-                    </div>
-                </a>
-
-                <!-- Users -->
-                <a href="../newUserAdmin/newUserAdmin.html" class="action-card">
-                    <div class="action-header">
-                        <div class="action-icon">
-                            <i class="fas fa-users"></i> <!-- El mismo que en la navegación -->
-                        </div>
-                        <h3 class="action-title">User Management</h3>
-                    </div>
-                    <p class="action-description">Create, edit, and manage user accounts. Set permissions, roles, and access levels.</p>
-                    <span class="action-badge">User Administration</span>
-                    <div class="action-cta">
-                        <span>Manage Users</span>
-                        <i class="fas fa-arrow-right"></i>
-                    </div>
-                </a>
-
-                <a href="../carouselAdmin/carouselAdmin.html" class="action-card">
-                    <div class="action-header">
-                        <div class="action-icon">
-                            <i class="fas fa-images"></i>
-                        </div>
-                        <h3 class="action-title">Edit Home Carousel</h3>
-                    </div>
-                    <p class="action-description">
-                        Manage and update the images displayed in the home page carousel. Upload, replace, or reorder photos easily.
-                    </p>
-                    <span class="action-badge">Visual Content</span>
-                    <div class="action-cta">
-                        <span>Edit Carousel</span>
-                        <i class="fas fa-arrow-right"></i>
-                    </div>
-                </a>
-
+            <div id="modulesContainer" class="modules-container">
+                <!-- Modules will be loaded dynamically -->
+                <div class="loading-modules" style="text-align: center; padding: 40px;">
+                    <i class="fas fa-spinner fa-spin fa-3x" style="color: var(--accent);"></i>
+                    <p style="margin-top: 20px; color: var(--text-light);">Loading all modules...</p>
+                </div>
             </div>
         </section>
-
         <!-- Recent Activity Section -->
         <section class="recent-activity-section">
             <h2 class="stats-title">
@@ -188,11 +84,11 @@
 
         <!-- Dashboard Footer -->
         <footer class="dashboard-footer">    
-        <span id="currentDate"></span></p>
+            <span id="currentDate"></span>
         </footer>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="dashAdmin.js"></script>
+    <script type="module" src="dashAdmin.js"></script>
     <script src="/components/footer-admin-component.js"></script>
 </body>
 </html>

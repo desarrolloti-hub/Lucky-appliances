@@ -24,10 +24,10 @@
         }
 
         :root.dark-mode {
-            --primary: #1a365d;
-            --primary-light: #2d4a7d;
+            --primary: #f5d742;
+            --primary-light: #e5c730;
             --primary-dark: #0a2540;
-            --accent: #f5d742;
+            --accent: #1a365d;
             --accent-dark: #e5c730;
             --accent-light: #fff5b8;
             --text: #e2e8f0;
@@ -291,7 +291,7 @@
         .action-badge {
             display: inline-block;
             background: rgba(10, 37, 64, 0.1);
-            color: var(--primary);
+            color: var(--accent);
             padding: 5px 12px;
             border-radius: 20px;
             font-size: 0.8rem;
@@ -302,7 +302,7 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            color: var(--primary);
+            color: var(--accent);
             font-weight: 600;
             font-size: 0.95rem;
             margin-top: 15px;
@@ -342,7 +342,7 @@
             height: 40px;
             border-radius: 50%;
             background: var(--light);
-            color: var(--primary);
+            color: var(--accent);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -558,3 +558,4 @@
                 box-shadow: none !important;
             }
         }
+

@@ -218,10 +218,6 @@ function createPermissionCard(permission, isActive) {
                     <i class="fas fa-edit"></i>
                     <span>Edit</span>
                 </button>
-                <button class="btn-delete" data-id="${permission.id}" title="Delete role">
-                    <i class="fas fa-trash-alt"></i>
-                    <span>Delete</span>
-                </button>
             </div>
         </div>
     `;
