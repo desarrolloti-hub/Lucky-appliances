@@ -617,6 +617,7 @@
                     <li><a href="../commentAdmin/commentAdmin.html"><i class="fas fa-comments"></i> Comments</a></li>
                     <li><a href="../carouselAdmin/carouselAdmin.html"><i class="fas fa-images"></i> Carousel</a></li>
                     <li><a href="../newUserAdmin/newUserAdmin.html"><i class="fas fa-users"></i> Users</a></li>
+                    <li><a href="../posAdmin/posAdmin.html"><i class="fas fa-cash-register"></i> POS</a></li>
                 </ul>
 
                 <div class="floating-admin-actions">

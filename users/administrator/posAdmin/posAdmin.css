@@ -776,7 +776,6 @@ div:hover .barcode-add-btn {
 
 .scan-indicator i {
     color: var(--accent);
-    animation: blink 1s infinite;
     font-size: 0.7rem;
 }
 
