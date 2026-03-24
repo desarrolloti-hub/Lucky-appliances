@@ -820,7 +820,7 @@ function updateCartSummary() {
         return sum + (item.product.nuestroPrecio * item.quantity);
     }, 0);
     
-    const tax = subtotal * 0.16; // 16% Tax
+    const tax = subtotal * 0.0838; // 8.38% Tax
     const total = subtotal + tax;
     
     subtotalEl.textContent = formatCurrency(subtotal);

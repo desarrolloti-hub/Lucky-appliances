@@ -10,6 +10,7 @@ import {
     query,
     where,
     orderBy,
+    limit,
     serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";

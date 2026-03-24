@@ -1,6 +1,5 @@
 // protect-page-component.js - Script para proteger páginas administrativas
 // Uso: <script src="/js/protect-page-component.js" data-module="products"></script>
-
 (function() {
     // Obtener el módulo requerido
     const scripts = document.getElementsByTagName('script');

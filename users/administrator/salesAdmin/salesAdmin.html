@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Sales History | Lucky Appliances</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/assets/icons/logo-lucky-appliances.png" type="image/png">
+    <meta name="description" content="View all sales history and invoices">
+    <meta name="author" content="Lucky Appliances">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://lucky-appliances.com/sales">
+    <meta property="og:title" content="Sales History | Lucky Appliances">
+    <meta property="og:description" content="View all sales history and invoices">
+
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../dashAdmin/dashAdmin.css">
+    <link rel="stylesheet" href="salesAdmin.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <script src="/components/navbar-admin-component.js"></script>
+    <script src="/components/theme-manager.js"></script>
+
+    <div class="sales-container">
+        <!-- Header -->
+        <header class="sales-header">
+            <h1>
+                <i class="fas fa-chart-line"></i>
+                Sales History
+            </h1>
+            <p class="sales-subtitle">View and manage all completed sales</p>
+        </header>
+
+        <!-- Filters Section - Solo búsqueda -->
+        <div class="filters-section">
+            <div class="filters-row">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search by sale number, customer, or seller..." class="form-control">
+                </div>
+
+                <button id="clearFiltersBtn" class="btn-clear">
+                    <i class="fas fa-eraser"></i> Clear
+                </button>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-card">
+                    <i class="fas fa-receipt"></i>
+                    <div class="stat-info">
+                        <span class="stat-label">Total Sales</span>
+                        <span class="stat-value" id="totalSales">0</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-dollar-sign"></i>
+                    <div class="stat-info">
+                        <span class="stat-label">Total Revenue</span>
+                        <span class="stat-value" id="totalRevenue">$0.00</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-boxes"></i>
+                    <div class="stat-info">
+                        <span class="stat-label">Items Sold</span>
+                        <span class="stat-value" id="totalItems">0</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-users"></i>
+                    <div class="stat-info">
+                        <span class="stat-label">Unique Customers</span>
+                        <span class="stat-value" id="uniqueCustomers">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingSales" class="loading-state">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Loading sales history...</p>
+        </div>
+
+        <!-- Sales Table -->
+        <div class="sales-table-container" style="display: none;">
+            <table class="sales-table">
+                <thead>
+                    <tr>
+                        <th>Sale #</th>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th>Seller</th>
+                        <th>Products</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="salesTableBody">
+                    <!-- Sales will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <i class="fas fa-folder-open"></i>
+            <h3>No sales found</h3>
+            <p>There are no sales matching your criteria.</p>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination" style="display: none;">
+            <button id="prevPageBtn" class="btn-pagination" disabled>
+                <i class="fas fa-chevron-left"></i> Previous
+            </button>
+            <span id="pageInfo" class="page-info">Page 1 of 1</span>
+            <button id="nextPageBtn" class="btn-pagination" disabled>
+                Next <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script type="module" src="salesAdmin.js"></script>
+    <script src="/components/footer-admin-component.js"></script>
+</body>
+</html>

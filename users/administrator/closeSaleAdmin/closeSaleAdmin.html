@@ -113,17 +113,17 @@
                 
                 <div class="charges-and-tax-container">
                     <!-- Tax Section -->
-                    <div class="tax-section">
-                        <h3><i class="fas fa-percent"></i> Tax (VAT)</h3>
-                        <div class="tax-control">
-                            <label for="taxRate">Tax Rate:</label>
-                            <input type="number" id="taxRate" class="form-control tax-input" min="0" max="100" step="0.1" value="16">
-                            <span>%</span>
-                            <label class="tax-toggle">
-                                <input type="checkbox" id="applyTax" checked> Apply Tax
-                            </label>
-                        </div>
+                <div class="tax-section">
+                    <h3><i class="fas fa-percent"></i> Tax</h3>
+                    <div class="tax-control">
+                        <label for="taxRate">Tax Rate:</label>
+                        <input type="number" id="taxRate" class="form-control tax-input" min="0" max="100" step="0.1" value="8.38" readonly>
+                        <span>%</span>
+                        <label class="tax-toggle">
+                            <input type="checkbox" id="applyTax" checked> Apply Tax
+                        </label>
                     </div>
+                </div>
 
                     <!-- Additional Charges Section -->
                     <div class="additional-charges-section">
@@ -191,7 +191,7 @@
                         <span id="summarySubtotal">$0.00</span>
                     </div>
                     <div class="summary-row tax-row" id="taxRow">
-                        <span>VAT (<span id="taxRateDisplay">16</span>%):</span>
+                        <span>TAX (<span id="taxRateDisplay">8.38</span>%):</span>
                         <span id="summaryTax">$0.00</span>
                     </div>
                     <div class="summary-row total">

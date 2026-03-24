@@ -45,7 +45,6 @@ const taxRateInput = document.getElementById('taxRate');
 const applyTaxCheckbox = document.getElementById('applyTax');
 const taxRow = document.getElementById('taxRow');
 
-
 // DOM Elements for Terms
 const applyCustomTerms = document.getElementById('applyCustomTerms');
 const termsText = document.getElementById('termsText');
@@ -61,7 +60,6 @@ const DEFAULT_TERMS = `1. All items are covered by a 90 day warranty and there a
 6. After 3 months of keeping items on hold we are not responsible for damages.
 7. Restocking fee applies for any returning item, often when the return is for reasons other than product defect or damages.
 8. All sales are final.`;
-
 
 // Currency formatter
 const formatCurrency = (amount) => {
@@ -132,12 +130,6 @@ async function loadProducts() {
         
         await productManager.loadBrandsAndCategoriesAndProviders();
         allProducts = await productManager.loadProducts();
-        
-        // Create a map to count how many times each serial appears
-        const serialCountMap = new Map();
-        serialNumbers.forEach(serial => {
-            serialCountMap.set(serial, (serialCountMap.get(serial) || 0) + 1);
-        });
         
         // Filter products that match serial numbers
         products = [];
@@ -277,6 +269,11 @@ function updateDateTime() {
     // Generate sale number
     saleNumber = generateSaleNumber();
     saleNumberEl.textContent = saleNumber;
+    
+    // Clear localStorage of selected products when generating sale number
+    localStorage.removeItem('selectedProducts');
+    localStorage.removeItem('selectedSerials');
+    console.log('Products cleared from localStorage');
 }
 
 // Generate sale number
@@ -303,16 +300,20 @@ function calculateChargesTotal() {
     }, 0);
 }
 
-// Calculate all totals
+// Calculate all totals - TAX only on products
 function calculateTotals() {
     const productsSubtotal = calculateProductsSubtotal();
     const chargesTotal = calculateChargesTotal();
-    const subtotal = productsSubtotal + chargesTotal;
     
-    // Check if tax should be applied
-    const taxRate = applyTaxCheckbox.checked ? (parseFloat(taxRateInput.value) || 0) / 100 : 0;
-    const tax = subtotal * taxRate;
-    const total = subtotal + tax;
+    // Tax ONLY on products subtotal
+    const taxRate = applyTaxCheckbox.checked ? 0.0838 : 0;
+    const tax = productsSubtotal * taxRate;
+    
+    // Total = productos + cargos + tax
+    const total = productsSubtotal + chargesTotal + tax;
+    
+    // Subtotal = productos + cargos (sin tax)
+    const subtotal = productsSubtotal + chargesTotal;
     
     return { productsSubtotal, chargesTotal, subtotal, tax, total, taxRate };
 }
@@ -321,13 +322,10 @@ function calculateTotals() {
 function updateSummary() {
     const totals = calculateTotals();
     
-    // Update products subtotal
     summaryProductsSubtotal.textContent = formatCurrency(totals.productsSubtotal);
     
-    // Update charges summary
     if (additionalCharges.length > 0) {
         chargesSummaryContainer.style.display = 'block';
-        
         let chargesHTML = '';
         additionalCharges.forEach((charge, index) => {
             chargesHTML += `
@@ -343,16 +341,13 @@ function updateSummary() {
         chargesSummaryContainer.innerHTML = '';
     }
     
-    // Update tax display
-    taxRateDisplay.textContent = applyTaxCheckbox.checked ? (parseFloat(taxRateInput.value) || 0) : '0';
+    taxRateDisplay.textContent = applyTaxCheckbox.checked ? '8.38' : '0';
     taxRow.style.display = applyTaxCheckbox.checked ? 'flex' : 'none';
     
-    // Update totals
     summarySubtotal.textContent = formatCurrency(totals.subtotal);
     summaryTax.textContent = formatCurrency(totals.tax);
     summaryTotal.textContent = formatCurrency(totals.total);
     
-    // Validate form
     validateForm();
 }
 
@@ -385,7 +380,6 @@ function renderAdditionalCharges() {
         </div>
     `).join('');
     
-    // Add event listeners to charge inputs
     document.querySelectorAll('.charge-description, .charge-amount').forEach(input => {
         input.addEventListener('input', (e) => {
             const index = e.target.dataset.chargeIndex;
@@ -399,7 +393,6 @@ function renderAdditionalCharges() {
         });
     });
     
-    // Add event listeners to remove buttons
     document.querySelectorAll('.btn-remove-charge').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const index = e.currentTarget.dataset.chargeIndex;
@@ -438,7 +431,7 @@ function showLoading(show) {
     }
 }
 
-// Upload PDF to Firebase Storage
+// Upload PDF to Firebase Storage - CORREGIDO
 async function uploadPDF(pdfBlob, saleId) {
     try {
         const { storage } = await import('/config/firebase-config.js');
@@ -447,7 +440,6 @@ async function uploadPDF(pdfBlob, saleId) {
         const fileName = `sales/${saleId}/${saleNumber}.pdf`;
         const storageRef = ref(storage, fileName);
         
-        // Configure metadata
         const metadata = {
             contentType: 'application/pdf',
             customMetadata: {
@@ -466,56 +458,21 @@ async function uploadPDF(pdfBlob, saleId) {
         
         // Get download URL
         const downloadURL = await getDownloadURL(storageRef);
-        console.log('PDF URL:', downloadURL);
+        console.log('✅ PDF URL from Storage:', downloadURL);
         
         return downloadURL;
         
     } catch (error) {
-        console.error('Detailed upload error:', {
-            code: error.code,
-            message: error.message,
-            name: error.name,
-            stack: error.stack
-        });
+        console.error('Upload error:', error);
         
-        // If CORS error, save locally but continue
-        if (error.code === 'storage/unauthorized' || error.message.includes('CORS')) {
-            console.warn('Storage error, but sale will continue with local PDF');
-            
-            // Generate local URL
-            const localUrl = URL.createObjectURL(pdfBlob);
-            
-            // Save reference in localStorage to upload later
-            const pendingUploads = JSON.parse(localStorage.getItem('pendingUploads') || '[]');
-            
-            // Convert blob to base64 to save
-            const reader = new FileReader();
-            const base64Promise = new Promise((resolve) => {
-                reader.onloadend = () => resolve(reader.result);
-                reader.readAsDataURL(pdfBlob);
-            });
-            
-            const base64data = await base64Promise;
-            
-            pendingUploads.push({
-                saleId: saleId,
-                saleNumber: saleNumber,
-                pdfData: base64data,
-                timestamp: new Date().toISOString()
-            });
-            localStorage.setItem('pendingUploads', JSON.stringify(pendingUploads));
-            
-            return localUrl;
-        }
-        
-        throw error;
+        // Si hay error, mostrar mensaje claro y NO guardar blob local
+        throw new Error(`Failed to upload PDF to storage: ${error.message}`);
     }
 }
 
 // Remove serial numbers from products
 async function removeSerialNumbersFromProducts() {
     try {
-        // Group by product to update each product once
         const productUpdates = new Map();
         
         products.forEach(item => {
@@ -529,7 +486,6 @@ async function removeSerialNumbersFromProducts() {
         for (const [productId, unidadesToRemove] of productUpdates) {
             const product = productManager.getProductById(productId);
             
-            // Filter out the sold serial numbers from this product
             const remainingUnidades = product.unidades.filter(unidad => {
                 const unidadSerial = (unidad.serie || unidad.numeroSerie || unidad.serialNumber || '').toString().trim();
                 return !unidadesToRemove.some(removeUnidad => {
@@ -538,7 +494,6 @@ async function removeSerialNumbersFromProducts() {
                 });
             });
             
-            // Update product in Firebase
             await productManager.updateProduct(productId, {
                 unidades: remainingUnidades
             });
@@ -552,14 +507,12 @@ async function removeSerialNumbersFromProducts() {
     }
 }
 
-// Complete sale
+// Complete sale - CORREGIDO
 async function completeSale() {
     try {
-        // Disable button to prevent double submission
         completeSaleBtn.disabled = true;
-        completeSaleBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+        completeSaleBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
         
-        // Get customer data
         const customerData = {
             name: customerName.value.trim(),
             address: customerAddress.value.trim(),
@@ -567,51 +520,43 @@ async function completeSale() {
             email: customerEmail.value.trim()
         };
         
-        // Get seller data
         const userData = JSON.parse(localStorage.getItem('currentUser') || '{}');
-        
-        // Calculate totals
         const totals = calculateTotals();
         
-        // Prepare products for PDF
         const pdfProducts = [];
         products.forEach(item => {
             pdfProducts.push({
                 serialNumber: item.serial,
+                description: item.product.ItemDescription || item.product.Model || 'N/A',
                 model: item.product.Model || 'N/A',
                 sku: item.product.SKU || 'N/A',
                 price: item.product.nuestroPrecio || 0
             });
         });
         
-        // Prepare additional charges for PDF (filter out empty ones)
         const validCharges = additionalCharges.filter(charge => 
             charge.description.trim() !== '' && charge.amount > 0
         );
         
-        // Show progress indicator
         Swal.fire({
             title: 'Processing Sale',
-            html: 'Please wait while we process your sale...',
+            html: 'Creating sale record...',
             allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
+            didOpen: () => Swal.showLoading()
         });
         
-        // Create sale in Firebase
+        // Crear venta primero
         const saleData = {
             saleNumber: saleNumber,
             terms: applyCustomTerms.checked ? termsText.value : DEFAULT_TERMS,
-            // Now we save objects with serial and product ID
             soldItems: products.map(item => ({
                 serialNumber: item.serial,
                 productId: item.product.id,
                 model: item.product.Model,
                 sku: item.product.SKU,
-                price: item.product.nuestroPrecio
+                price: item.product.nuestroPrecio,
+                description: item.product.ItemDescription || item.product.Model
             })),
-            // Keep simple serialNumbers for compatibility
             serialNumbers: products.map(item => item.serial),
             customerName: customerData.name,
             customerAddress: customerData.address,
@@ -629,20 +574,16 @@ async function completeSale() {
             subtotal: totals.subtotal,
             tax: totals.tax,
             total: totals.total,
-            taxRate: totals.taxRate // Send the used tax rate
+            taxRate: totals.taxRate
         };
         
         const saleResult = await salesManager.createSale(saleData);
         const saleId = saleResult.id;
+        console.log('Sale created with ID:', saleId);
         
-        // Update Swal message
-        Swal.update({
-            html: 'Generating PDF...'
-        });
+        Swal.update({ html: 'Generating PDF...' });
         
-        // Generate PDF
-        console.log('Generating PDF with products:', pdfProducts);
-        // Generate PDF
+        // Generar PDF
         const pdfBlob = await pdfGenerator.generateSalePDF({
             saleNumber: saleNumber,
             customer: customerData,
@@ -660,37 +601,40 @@ async function completeSale() {
                 taxRate: totals.taxRate
             },
             additionalCharges: validCharges,
-            terms: applyCustomTerms.checked ? termsText.value : DEFAULT_TERMS // Add this line
+            terms: applyCustomTerms.checked ? termsText.value : DEFAULT_TERMS
         }, pdfProducts);
         
         console.log('PDF generated, blob size:', pdfBlob.size);
         
-        // Update Swal message
-        Swal.update({
-            html: 'Uploading PDF to cloud...'
-        });
+        Swal.update({ html: 'Uploading PDF to cloud...' });
         
-        // Upload PDF to Storage
+        // SUBIR A STORAGE Y OBTENER URL REAL
         const pdfURL = await uploadPDF(pdfBlob, saleId);
+        console.log('✅ PDF uploaded to Storage, URL:', pdfURL);
         
-        // Update sale with PDF URL
+        // ACTUALIZAR VENTA CON LA URL REAL DE STORAGE
         await salesManager.updateSalePDF(saleId, pdfURL);
+        console.log('✅ Sale updated with Storage URL');
         
-        // Update Swal message
-        Swal.update({
-            html: 'Updating inventory...'
-        });
+        Swal.update({ html: 'Updating inventory...' });
         
-        // Remove sold serial numbers from products
         await removeSerialNumbersFromProducts();
         
-        // Close loading Swal
+        // Limpiar localStorage
+        localStorage.removeItem('selectedProducts');
+        localStorage.removeItem('selectedSerials');
+        localStorage.removeItem('posCart');
+        localStorage.removeItem('tempCart');
+        localStorage.removeItem('currentCart');
+        localStorage.removeItem('cartItems');
+        localStorage.removeItem('tempSerials');
+        localStorage.removeItem('selectedItems');
+        
+        console.log('✅ All cart data cleared');
+        
         Swal.close();
         
-        // Create local URL for preview
-        const pdfUrl = URL.createObjectURL(pdfBlob);
-        
-        // Function to download PDF
+        // Función para descargar
         window.downloadPDF = function(url, filename) {
             const a = document.createElement('a');
             a.href = url;
@@ -700,7 +644,7 @@ async function completeSale() {
             document.body.removeChild(a);
         };
         
-        // Show success with PDF preview
+        // Mostrar éxito con la URL de Storage
         Swal.fire({
             icon: 'success',
             title: 'Sale Completed!',
@@ -719,21 +663,20 @@ async function completeSale() {
                         </p>
                         
                         <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                            <button onclick="window.open('${pdfUrl}', '_blank')" 
+                            <button onclick="window.open('${pdfURL}', '_blank')" 
                                     style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; gap: 8px;">
                                 <i class="fas fa-eye"></i> View PDF
                             </button>
                             
-                            <button onclick="window.downloadPDF('${pdfUrl}', '${saleNumber}')" 
+                            <button onclick="window.downloadPDF('${pdfURL}', '${saleNumber}')" 
                                     style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; gap: 8px;">
                                 <i class="fas fa-download"></i> Download PDF
                             </button>
                         </div>
                         
-                        ${pdfURL && pdfURL.startsWith('blob:') ? 
-                            '<p style="margin-top: 15px; font-size: 0.85rem; color: #856404; background: #fff3cd; padding: 8px; border-radius: 4px;"><i class="fas fa-info-circle"></i> PDF saved locally. Cloud sync pending.</p>' : 
-                            '<p style="margin-top: 15px; font-size: 0.85rem; color: #155724; background: #d4edda; padding: 8px; border-radius: 4px;"><i class="fas fa-cloud-upload-alt"></i> PDF saved to cloud</p>'
-                        }
+                        <p style="margin-top: 15px; font-size: 0.85rem; color: #155724; background: #d4edda; padding: 8px; border-radius: 4px;">
+                            <i class="fas fa-cloud-upload-alt"></i> PDF saved to cloud storage
+                        </p>
                     </div>
                 </div>
             `,
@@ -747,7 +690,7 @@ async function completeSale() {
             denyButtonColor: '#28a745'
         }).then((result) => {
             if (result.isDenied) {
-                window.location.href = '../sales/sales.html';
+                window.location.href = '../sales/salesAdmin.html';
             } else if (result.dismiss === Swal.DismissReason.cancel) {
                 window.location.href = '../posAdmin/posAdmin.html';
             }
@@ -766,7 +709,6 @@ async function completeSale() {
             confirmButtonColor: '#4CAF50'
         });
         
-        // Re-enable button
         completeSaleBtn.disabled = false;
         completeSaleBtn.innerHTML = '<i class="fas fa-check-circle"></i> Complete Sale';
     }
@@ -775,7 +717,12 @@ async function completeSale() {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Initializing Close Sale...');
-    // Event listeners for Terms
+    
+    if (taxRateInput) {
+        taxRateInput.value = "8.38";
+        taxRateInput.readOnly = true;
+    }
+    
     if (applyCustomTerms) {
         applyCustomTerms.addEventListener('change', toggleTermsEditor);
     }
@@ -788,12 +735,11 @@ document.addEventListener('DOMContentLoaded', () => {
         resetTermsBtn.addEventListener('click', resetTerms);
     }
 
-    // Initialize terms
     if (termsText) {
         termsText.value = DEFAULT_TERMS;
         updateTermsPreview();
     }
-    // Load data from URL
+    
     if (!loadFromURL()) {
         Swal.fire({
             icon: 'error',
@@ -805,31 +751,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
     
-    // Load seller info
     loadSellerInfo();
-    
-    // Start date/time updates
     updateDateTime();
     setInterval(updateDateTime, 1000);
-    
-    // Load products
     loadProducts();
     
-    // Event listeners for Tax
-    taxRateInput.addEventListener('input', updateSummary);
     applyTaxCheckbox.addEventListener('change', updateSummary);
-    
-    // Event listeners
     customerName.addEventListener('input', validateForm);
-    
     addChargeBtn.addEventListener('click', addNewCharge);
-    
     completeSaleBtn.addEventListener('click', completeSale);
-    
     backBtn.addEventListener('click', () => {
         window.location.href = '../posAdmin/posAdmin.html';
     });
 });
 
-// Export functions that might be needed globally
 window.completeSale = completeSale;
