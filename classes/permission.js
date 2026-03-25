@@ -72,6 +72,8 @@ class Permission {
             { id: 'products', name: 'Product Management', icon: 'fa-box' },
             { id: 'suppliers', name: 'Supplier Management', icon: 'fa-truck' },
             { id: 'pos', name: 'Point of Sale', icon: 'fa-cash-register' },
+            { id: 'clients', name: 'Clients Management', icon: 'fas fa-users' },
+            { id: 'sales', name: 'Sales History', icon: 'fa-fas fa-chart-line' },
             { id: 'permissions', name: 'Permissions Management', icon: 'fa-lock' }
         ];
 

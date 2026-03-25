@@ -1,11 +1,13 @@
 // closeSaleAdmin.js - Complete sale logic
 import { ProductManager } from '/classes/product.js';
 import { SalesManager } from '/classes/sale.js';
+import { ClientManager } from '/classes/client.js';
 import { PDFGenerator } from './pdf-generator.js';
 
 // Initialize managers
 const productManager = new ProductManager();
 const salesManager = new SalesManager();
+const clientManager = new ClientManager();
 const pdfGenerator = new PDFGenerator();
 
 // State
@@ -14,6 +16,11 @@ let products = [];
 let allProducts = [];
 let saleNumber = '';
 let additionalCharges = [];
+
+// Variables para autocompletado de clientes
+let clientSearchTimeout = null;
+let currentSuggestedClient = null; // Cliente sugerido
+let isClientSelected = false; // Si el usuario aceptó la sugerencia
 
 // DOM Elements
 const productsGrid = document.getElementById('productsGrid');
@@ -123,6 +130,316 @@ function resetTerms() {
     }
 }
 
+// ============ CLIENT MANAGEMENT FUNCTIONS ============
+
+// Crear elemento de sugerencia con botones siempre visibles
+function createSuggestionElement(client) {
+    const suggestionDiv = document.createElement('div');
+    suggestionDiv.className = 'client-suggestion';
+    suggestionDiv.style.cssText = `
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--white);
+        border: 1px solid var(--gray);
+        border-radius: 12px;
+        margin-top: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+        animation: slideDown 0.2s ease;
+    `;
+    
+    suggestionDiv.innerHTML = `
+        <div style="padding: 12px 15px; background: linear-gradient(135deg, var(--primary-light), var(--primary)); border-radius: 12px 12px 0 0; color: white;">
+            <strong><i class="fas fa-user-check"></i> Existing Client Found</strong>
+        </div>
+        <div style="padding: 15px;">
+            <div style="font-weight: 600; font-size: 1rem; margin-bottom: 8px;">${escapeHtml(client.name)}</div>
+            ${client.phone ? `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 0.85rem;"><i class="fas fa-phone" style="color: var(--accent); width: 20px; flex-shrink: 0;"></i> <span style="word-break: break-word; flex: 1;">${escapeHtml(client.phone)}</span></div>` : ''}
+            ${client.email ? `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 0.85rem;"><i class="fas fa-envelope" style="color: var(--accent); width: 20px; flex-shrink: 0;"></i> <span style="word-break: break-word; flex: 1;">${escapeHtml(client.email)}</span></div>` : ''}
+            ${client.address ? `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 0.85rem;"><i class="fas fa-map-marker-alt" style="color: var(--accent); width: 20px; flex-shrink: 0;"></i> <span style="word-break: break-word; flex: 1;">${escapeHtml(client.address)}</span></div>` : ''}
+        </div>
+        <div style="padding: 12px 15px; border-top: 1px solid var(--gray); display: flex; gap: 12px; background: var(--light); border-radius: 0 0 12px 12px;">
+            <button class="accept-suggestion" style="flex: 1; padding: 10px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <i class="fas fa-check-circle"></i> Use This Client
+            </button>
+            <button class="ignore-suggestion" style="flex: 1; padding: 10px; background: var(--danger); border: 1px solid var(--danger); border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px; color: white;">
+                <i class="fas fa-times-circle"></i> Continue with New Data
+            </button>
+        </div>
+    `;
+    
+    // Agregar hover effects
+    const acceptBtn = suggestionDiv.querySelector('.accept-suggestion');
+    const ignoreBtn = suggestionDiv.querySelector('.ignore-suggestion');
+    
+    acceptBtn.onmouseenter = () => {
+        acceptBtn.style.transform = 'translateY(-1px)';
+        acceptBtn.style.boxShadow = '0 2px 8px rgba(76, 175, 80, 0.3)';
+    };
+    acceptBtn.onmouseleave = () => {
+        acceptBtn.style.transform = 'translateY(0)';
+        acceptBtn.style.boxShadow = 'none';
+    };
+    
+    ignoreBtn.onmouseenter = () => {
+        ignoreBtn.style.background = '#c82333';
+        ignoreBtn.style.transform = 'translateY(-1px)';
+        ignoreBtn.style.boxShadow = '0 2px 8px rgba(220, 53, 69, 0.3)';
+    };
+    ignoreBtn.onmouseleave = () => {
+        ignoreBtn.style.background = 'var(--danger)';
+        ignoreBtn.style.transform = 'translateY(0)';
+        ignoreBtn.style.boxShadow = 'none';
+    };
+    
+    // Event listeners
+    acceptBtn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        acceptClientSuggestion(client);
+        suggestionDiv.remove();
+    };
+    
+    ignoreBtn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        currentSuggestedClient = null;
+        isClientSelected = false;
+        suggestionDiv.remove();
+        customerName.focus();
+    };
+    
+    return suggestionDiv;
+}
+
+// Escapar HTML para prevenir XSS
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Aceptar sugerencia de cliente
+function acceptClientSuggestion(client) {
+    console.log('Accepting client suggestion:', client.name);
+    
+    // Autocompletar campos
+    customerName.value = client.name;
+    customerAddress.value = client.address || '';
+    customerPhone.value = client.phone || '';
+    customerEmail.value = client.email || '';
+    
+    // Marcar que se ha seleccionado un cliente existente
+    currentSuggestedClient = client;
+    isClientSelected = true;
+    
+    // Mostrar feedback
+    showTemporaryMessage(`Client "${client.name}" loaded successfully`, 'success');
+    
+    // Validar formulario
+    validateForm();
+}
+
+// Buscar cliente por nombre (coincidencia parcial)
+function searchClientByName(searchTerm) {
+    if (!searchTerm || searchTerm.trim() === '') return null;
+    
+    const term = searchTerm.toLowerCase().trim();
+    
+    // Buscar coincidencia exacta
+    let exactMatch = clientManager.clients.find(client => 
+        client.name.toLowerCase() === term
+    );
+    if (exactMatch) return exactMatch;
+    
+    // Buscar coincidencia que empiece con el término
+    let startsWithMatch = clientManager.clients.find(client => 
+        client.name.toLowerCase().startsWith(term)
+    );
+    if (startsWithMatch) return startsWithMatch;
+    
+    // Buscar coincidencia parcial
+    let partialMatch = clientManager.clients.find(client => 
+        client.name.toLowerCase().includes(term)
+    );
+    
+    return partialMatch || null;
+}
+
+// Eliminar sugerencia existente
+function removeExistingSuggestion() {
+    const existingSuggestion = document.querySelector('.client-suggestion');
+    if (existingSuggestion) {
+        existingSuggestion.remove();
+    }
+}
+
+// Mostrar mensaje temporal
+function showTemporaryMessage(message, type = 'success') {
+    let messageEl = document.getElementById('tempMessage');
+    if (!messageEl) {
+        messageEl = document.createElement('div');
+        messageEl.id = 'tempMessage';
+        messageEl.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            z-index: 1000;
+            font-size: 0.9rem;
+            animation: slideInRight 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        `;
+        document.body.appendChild(messageEl);
+        
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    if (type === 'warning') {
+        messageEl.style.background = 'var(--warning)';
+        messageEl.style.color = '#333';
+    } else if (type === 'error') {
+        messageEl.style.background = 'var(--danger)';
+    } else {
+        messageEl.style.background = 'var(--accent)';
+    }
+    
+    messageEl.innerHTML = `<i class="fas ${type === 'success' ? 'fa-user-check' : 'fa-exclamation-triangle'}"></i> ${message}`;
+    messageEl.style.display = 'flex';
+    
+    setTimeout(() => {
+        messageEl.style.display = 'none';
+    }, 3000);
+}
+
+// Manejar entrada de nombre del cliente (con debounce)
+function handleCustomerNameInput(event) {
+    const searchTerm = event.target.value.trim();
+    
+    // Limpiar timeout anterior
+    if (clientSearchTimeout) {
+        clearTimeout(clientSearchTimeout);
+    }
+    
+    // Eliminar sugerencia existente
+    removeExistingSuggestion();
+    
+    // Si no hay término de búsqueda o el usuario ya seleccionó un cliente
+    if (!searchTerm || isClientSelected) {
+        if (!searchTerm) {
+            isClientSelected = false;
+            currentSuggestedClient = null;
+        }
+        return;
+    }
+    
+    // Debounce para buscar después de dejar de escribir
+    clientSearchTimeout = setTimeout(async () => {
+        // Asegurar que los clientes estén cargados
+        if (clientManager.clients.length === 0) {
+            await clientManager.loadClients();
+        }
+        
+        // Buscar cliente
+        const foundClient = searchClientByName(searchTerm);
+        
+        if (foundClient && foundClient.name.toLowerCase() !== searchTerm.toLowerCase()) {
+            // Mostrar sugerencia solo si no es una coincidencia exacta
+            currentSuggestedClient = foundClient;
+            
+            // Crear y mostrar elemento de sugerencia
+            const suggestionElement = createSuggestionElement(foundClient);
+            const nameInput = event.target;
+            const container = nameInput.parentElement;
+            container.style.position = 'relative';
+            container.appendChild(suggestionElement);
+        } else {
+            currentSuggestedClient = null;
+        }
+    }, 500);
+}
+
+// Guardar o actualizar cliente después de la venta
+async function saveOrUpdateClient(customerData, saleId) {
+    try {
+        // Si el usuario seleccionó un cliente existente
+        if (isClientSelected && currentSuggestedClient) {
+            // Verificar si hay datos que actualizar
+            let needsUpdate = false;
+            const updateData = {};
+            
+            if (customerData.address && currentSuggestedClient.address !== customerData.address) {
+                updateData.address = customerData.address;
+                needsUpdate = true;
+            }
+            if (customerData.phone && currentSuggestedClient.phone !== customerData.phone) {
+                updateData.phone = customerData.phone;
+                needsUpdate = true;
+            }
+            if (customerData.email && currentSuggestedClient.email !== customerData.email) {
+                updateData.email = customerData.email;
+                needsUpdate = true;
+            }
+            
+            if (needsUpdate) {
+                await clientManager.updateClient(currentSuggestedClient.id, updateData);
+                console.log('Client updated with new information');
+            }
+            
+            // Agregar venta al historial
+            await clientManager.addPurchaseToClient(currentSuggestedClient.id, saleId);
+            console.log(`Sale ${saleId} added to client ${currentSuggestedClient.name} history`);
+            
+            return currentSuggestedClient;
+        } 
+        // Si es un cliente nuevo
+        else if (customerData.name && customerData.name.trim() !== '') {
+            // Verificar si ya existe (por si acaso)
+            const existingClient = searchClientByName(customerData.name);
+            if (existingClient) {
+                await clientManager.addPurchaseToClient(existingClient.id, saleId);
+                return existingClient;
+            } else {
+                // Crear nuevo cliente
+                const newClientData = {
+                    name: customerData.name,
+                    address: customerData.address || '',
+                    phone: customerData.phone || '',
+                    email: customerData.email || '',
+                    history: [saleId]
+                };
+                
+                const result = await clientManager.createClient(newClientData);
+                console.log('New client created:', result.client.name);
+                return result.client;
+            }
+        }
+        
+        return null;
+    } catch (error) {
+        console.error('Error saving/updating client:', error);
+        throw error;
+    }
+}
+
+// ============ END CLIENT MANAGEMENT FUNCTIONS ============
+
 // Load all products
 async function loadProducts() {
     try {
@@ -135,13 +452,11 @@ async function loadProducts() {
         products = [];
         allProducts.forEach(product => {
             if (product.unidades && Array.isArray(product.unidades)) {
-                // Find all units that match the serials
                 const matchingUnidades = product.unidades.filter(unidad => {
                     const unidadSerial = (unidad.serie || unidad.numeroSerie || unidad.serialNumber || '').toString().trim();
                     return serialNumbers.includes(unidadSerial);
                 });
                 
-                // Add an entry for each found unit
                 matchingUnidades.forEach(unidad => {
                     products.push({
                         product: product,
@@ -152,7 +467,7 @@ async function loadProducts() {
             }
         });
         
-        console.log('Products to sell (with multiples):', products.length);
+        console.log('Products to sell:', products.length);
         renderProducts();
         updateSummary();
         updateProductCount();
@@ -181,7 +496,6 @@ function renderProducts() {
         return;
     }
     
-    // Group by product to show if there are multiple units
     const productGroups = new Map();
     products.forEach(item => {
         const productId = item.product.id;
@@ -196,7 +510,6 @@ function renderProducts() {
         const imageUrl = getProductImage(product);
         const quantity = items.length;
         
-        // Show all serials for this product
         const serialsList = items.map(item => 
             `<div class="product-serial"><i class="fas fa-barcode"></i> ${item.serial}</div>`
         ).join('');
@@ -266,11 +579,9 @@ function updateDateTime() {
     currentDate.textContent = now.toLocaleDateString('en-US', dateOptions);
     currentTime.textContent = now.toLocaleTimeString('en-US', timeOptions);
     
-    // Generate sale number
     saleNumber = generateSaleNumber();
     saleNumberEl.textContent = saleNumber;
     
-    // Clear localStorage of selected products when generating sale number
     localStorage.removeItem('selectedProducts');
     localStorage.removeItem('selectedSerials');
     console.log('Products cleared from localStorage');
@@ -300,19 +611,14 @@ function calculateChargesTotal() {
     }, 0);
 }
 
-// Calculate all totals - TAX only on products
+// Calculate all totals
 function calculateTotals() {
     const productsSubtotal = calculateProductsSubtotal();
     const chargesTotal = calculateChargesTotal();
     
-    // Tax ONLY on products subtotal
     const taxRate = applyTaxCheckbox.checked ? 0.0838 : 0;
     const tax = productsSubtotal * taxRate;
-    
-    // Total = productos + cargos + tax
     const total = productsSubtotal + chargesTotal + tax;
-    
-    // Subtotal = productos + cargos (sin tax)
     const subtotal = productsSubtotal + chargesTotal;
     
     return { productsSubtotal, chargesTotal, subtotal, tax, total, taxRate };
@@ -431,7 +737,7 @@ function showLoading(show) {
     }
 }
 
-// Upload PDF to Firebase Storage - CORREGIDO
+// Upload PDF to Firebase Storage
 async function uploadPDF(pdfBlob, saleId) {
     try {
         const { storage } = await import('/config/firebase-config.js');
@@ -452,11 +758,9 @@ async function uploadPDF(pdfBlob, saleId) {
         console.log('Uploading PDF to:', fileName);
         console.log('PDF Blob size:', pdfBlob.size, 'bytes');
         
-        // Upload the file
         const snapshot = await uploadBytes(storageRef, pdfBlob, metadata);
         console.log('Upload completed:', snapshot);
         
-        // Get download URL
         const downloadURL = await getDownloadURL(storageRef);
         console.log('✅ PDF URL from Storage:', downloadURL);
         
@@ -464,8 +768,6 @@ async function uploadPDF(pdfBlob, saleId) {
         
     } catch (error) {
         console.error('Upload error:', error);
-        
-        // Si hay error, mostrar mensaje claro y NO guardar blob local
         throw new Error(`Failed to upload PDF to storage: ${error.message}`);
     }
 }
@@ -507,7 +809,7 @@ async function removeSerialNumbersFromProducts() {
     }
 }
 
-// Complete sale - CORREGIDO
+// Complete sale
 async function completeSale() {
     try {
         completeSaleBtn.disabled = true;
@@ -545,7 +847,7 @@ async function completeSale() {
             didOpen: () => Swal.showLoading()
         });
         
-        // Crear venta primero
+        // Crear venta
         const saleData = {
             saleNumber: saleNumber,
             terms: applyCustomTerms.checked ? termsText.value : DEFAULT_TERMS,
@@ -581,6 +883,20 @@ async function completeSale() {
         const saleId = saleResult.id;
         console.log('Sale created with ID:', saleId);
         
+        // ============ GUARDAR CLIENTE Y AGREGAR AL HISTORIAL ============
+        Swal.update({ html: 'Saving client information...' });
+        
+        try {
+            const savedClient = await saveOrUpdateClient(customerData, saleId);
+            if (savedClient) {
+                console.log('Client saved/updated successfully:', savedClient.name);
+                console.log(`Sale ${saleId} added to client history`);
+            }
+        } catch (clientError) {
+            console.error('Error saving client:', clientError);
+            // Continuamos con el proceso
+        }
+        
         Swal.update({ html: 'Generating PDF...' });
         
         // Generar PDF
@@ -608,11 +924,9 @@ async function completeSale() {
         
         Swal.update({ html: 'Uploading PDF to cloud...' });
         
-        // SUBIR A STORAGE Y OBTENER URL REAL
         const pdfURL = await uploadPDF(pdfBlob, saleId);
         console.log('✅ PDF uploaded to Storage, URL:', pdfURL);
         
-        // ACTUALIZAR VENTA CON LA URL REAL DE STORAGE
         await salesManager.updateSalePDF(saleId, pdfURL);
         console.log('✅ Sale updated with Storage URL');
         
@@ -634,7 +948,6 @@ async function completeSale() {
         
         Swal.close();
         
-        // Función para descargar
         window.downloadPDF = function(url, filename) {
             const a = document.createElement('a');
             a.href = url;
@@ -644,7 +957,6 @@ async function completeSale() {
             document.body.removeChild(a);
         };
         
-        // Mostrar éxito con la URL de Storage
         Swal.fire({
             icon: 'success',
             title: 'Sale Completed!',
@@ -715,7 +1027,7 @@ async function completeSale() {
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     console.log('Initializing Close Sale...');
     
     if (taxRateInput) {
@@ -755,6 +1067,25 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDateTime();
     setInterval(updateDateTime, 1000);
     loadProducts();
+    
+    // ============ CARGAR CLIENTES PARA SUGERENCIAS ============
+    try {
+        await clientManager.loadClients();
+        console.log(`Loaded ${clientManager.clients.length} clients for suggestions`);
+    } catch (error) {
+        console.error('Error loading clients for suggestions:', error);
+    }
+    
+    // Event listener para sugerencias de cliente
+    if (customerName) {
+        customerName.addEventListener('input', handleCustomerNameInput);
+        // También limpiar sugerencia cuando el campo pierde foco
+        customerName.addEventListener('blur', () => {
+            setTimeout(() => {
+                removeExistingSuggestion();
+            }, 300);
+        });
+    }
     
     applyTaxCheckbox.addEventListener('change', updateSummary);
     customerName.addEventListener('input', validateForm);

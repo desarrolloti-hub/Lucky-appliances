@@ -9,27 +9,15 @@
     <meta name="description" content="Lucky Appliances Dashboard - Access your authorized modules">
     <meta name="author" content="Lucky Appliances">
     
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://lucky-appliances.com/dashboard">
-    <meta property="og:title" content="Dashboard | Lucky Appliances">
-    <meta property="og:description" content="Access your authorized modules and manage content">
-    <meta property="og:image" content="https://lucky-appliances.com/img/Logo-Lucky-Apliances.png">
-    
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Dashboard | Lucky Appliances">
-    <meta name="twitter:description" content="Access your authorized modules and manage content">
-    
     <!-- Fonts & Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/users/administrator/dashAdmin/dashAdmin.css">
-    <link rel="stylesheet" href="./dashboardGeneral.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="dashboardGeneral.css">
 </head>
 <body>
-    <!-- Navbar flotante se cargará aquí -->
+    <!-- Navbar flotante -->
     <script src="/components/navbar-collaborator-component.js"></script>
     <script src="/components/theme-manager.js"></script>
 
@@ -39,11 +27,11 @@
             <div class="header-content">
                 <h1>
                     <i class="fas fa-tachometer-alt"></i>
-                    Dashboard General
+                    Dashboard
                 </h1>
                 <p>Welcome to your personalized dashboard. Access the modules you have permission to use.</p>
             </div>
-
+            <div class="welcome-badge" id="welcomeUser">Loading...</div>
         </header>
 
         <!-- Modules Grid Section -->
@@ -52,8 +40,7 @@
                 <i class="fas fa-cubes"></i>
                 Available Modules
             </h2>
-            <div id="modulesContainer" class="modules-grid">
-                <!-- Modules will be loaded here based on permissions -->
+            <div id="modulesContainer" class="modules-container">
                 <div class="loading-modules">
                     <i class="fas fa-spinner fa-spin"></i>
                     <p>Loading your modules...</p>
@@ -71,6 +58,11 @@
                 <!-- Stats will be loaded dynamically -->
             </div>
         </section>
+
+        <!-- Dashboard Footer -->
+        <footer class="dashboard-footer">
+            <span id="currentDate"></span>
+        </footer>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

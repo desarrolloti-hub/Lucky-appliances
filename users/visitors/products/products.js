@@ -203,12 +203,22 @@ async function loadInitialData() {
     showLoading(true);
     
     try {
-        // Cargar marcas, categorías y proveedores - CORREGIDO: nombre del método
+        // Cargar marcas, categorías y proveedores
         await productManager.loadBrandsAndCategoriesAndProviders();
         
         // Cargar productos
         await productManager.loadProducts();
-        allProducts = productManager.products;
+        
+        // === FILTRAR PRODUCTOS CON PRECIO 0 ===
+        // Solo incluir productos con nuestroPrecio > 0
+        allProducts = productManager.products.filter(product => {
+            const ourPrice = product.nuestroPrecio || 0;
+            return ourPrice > 0; // Excluir productos con precio 0
+        });
+        
+        console.log(`Total products loaded: ${productManager.products.length}`);
+        console.log(`Products after filtering price 0: ${allProducts.length}`);
+        console.log(`Products excluded (price = 0): ${productManager.products.length - allProducts.length}`);
         
         // Cargar filtros de marcas y categorías
         loadBrandsFilter();
@@ -226,7 +236,7 @@ async function loadInitialData() {
             markBrandInFilter(brandFromUrl);
         }
         
-        // Actualizar título según parámetros - AHORA DESPUÉS de cargar las categorías/marcas
+        // Actualizar título según parámetros
         updatePageTitleByParams();
         
         // Mostrar estadísticas iniciales

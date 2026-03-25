@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Client History | Lucky Appliances</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/assets/icons/Logo Lucky Apliances.png" type="image/png">
+    <meta name="description" content="View client purchase history">
+    <meta name="author" content="Lucky Appliances">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://lucky-appliances.com/client-history">
+    <meta property="og:title" content="Client History | Lucky Appliances">
+    <meta property="og:description" content="View client purchase history">
+
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../dashAdmin/dashAdmin.css">
+    <link rel="stylesheet" href="clientHistory.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <script src="/components/navbar-admin-component.js"></script>
+    <script src="/components/theme-manager.js"></script>
+
+    <div class="history-container">
+        <!-- Back Button -->
+        <div class="back-button">
+            <a href="../clients/clientsAdmin.html" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Back to Clients
+            </a>
+        </div>
+
+        <!-- Header -->
+        <header class="history-header">
+            <h1>
+                <i class="fas fa-history"></i>
+                Purchase History
+            </h1>
+            <p class="history-subtitle">View all purchases made by this client</p>
+        </header>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Loading client information...</p>
+        </div>
+
+        <!-- Client Info Card -->
+        <div id="clientInfoCard" class="client-info-card" style="display: none;">
+            <div class="client-info-header">
+                <i class="fas fa-user-circle"></i>
+                <h2>Client Information</h2>
+            </div>
+            <div class="client-info-grid">
+                <div class="info-item">
+                    <i class="fas fa-user"></i>
+                    <span class="info-label">Name:</span>
+                    <span class="info-value" id="clientName">-</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-phone"></i>
+                    <span class="info-label">Phone:</span>
+                    <span class="info-value" id="clientPhone">-</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-envelope"></i>
+                    <span class="info-label">Email:</span>
+                    <span class="info-value" id="clientEmail">-</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span class="info-label">Address:</span>
+                    <span class="info-value" id="clientAddress">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Summary -->
+        <div id="statsSummary" class="stats-summary" style="display: none;">
+            <div class="stat-card">
+                <i class="fas fa-shopping-cart"></i>
+                <div class="stat-info">
+                    <span class="stat-label">Total Purchases</span>
+                    <span class="stat-value" id="totalPurchases">0</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-dollar-sign"></i>
+                <div class="stat-info">
+                    <span class="stat-label">Total Spent</span>
+                    <span class="stat-value" id="totalSpent">$0.00</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-calendar-alt"></i>
+                <div class="stat-info">
+                    <span class="stat-label">First Purchase</span>
+                    <span class="stat-value" id="firstPurchase">-</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-calendar-check"></i>
+                <div class="stat-info">
+                    <span class="stat-label">Last Purchase</span>
+                    <span class="stat-value" id="lastPurchase">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Title -->
+        <div id="salesSection" style="display: none;">
+            <div class="section-title">
+                <i class="fas fa-receipt"></i>
+                <h3>Purchase History</h3>
+            </div>
+        </div>
+
+        <!-- Sales Grid -->
+        <div id="salesGrid" class="sales-grid" style="display: none;">
+            <!-- Sales will be loaded here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <i class="fas fa-shopping-bag"></i>
+            <h3>No purchases yet</h3>
+            <p>This client hasn't made any purchases yet.</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="error-state" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>Error Loading Data</h3>
+            <p id="errorMessage">An error occurred while loading the client information.</p>
+            <button onclick="location.reload()" class="btn-back" style="margin-top: 15px;">
+                <i class="fas fa-redo"></i> Try Again
+            </button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script type="module" src="clientHistory.js"></script>
+    <script src="/components/footer-admin-component.js"></script>
+</body>
+</html>

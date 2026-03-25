@@ -1,4 +1,3 @@
-
 (function() {
     'use strict';
     
@@ -30,6 +29,7 @@
             await checkAuthStatus();
             setupThemeIntegration();
             setupLogout();
+            setupCollapsibleGroups(); // Agregar funcionalidad de grupos desplegables
             console.log('✅ Floating Admin Navbar listo');
         } catch (error) {
             console.error('❌ Error inicializando navbar:', error);
@@ -111,7 +111,6 @@
                 transform: scale(1);
             }
 
-            /* OCULTAR BOTÓN CUANDO EL MENÚ ESTÁ ABIERTO */
             .floating-admin-toggle.menu-open {
                 opacity: 0;
                 transform: scale(0);
@@ -127,7 +126,6 @@
                 box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
             }
 
-            /* Overlay */
             .floating-admin-overlay {
                 position: fixed;
                 top: 0;
@@ -146,7 +144,6 @@
                 visibility: visible;
             }
 
-            /* Panel lateral */
             .floating-admin-panel {
                 position: fixed;
                 top: 0;
@@ -169,7 +166,6 @@
                 left: 0;
             }
 
-            /* Header del panel */
             .floating-admin-header {
                 padding: 20px;
                 background: linear-gradient(135deg, #0a2540 0%, #061a2d 100%);
@@ -231,7 +227,6 @@
                 transform: rotate(90deg);
             }
 
-            /* Contenido del panel */
             .floating-admin-content {
                 flex: 1;
                 overflow-y: auto;
@@ -243,7 +238,6 @@
                 background: #2d3748;
             }
 
-            /* Menú de navegación */
             .floating-admin-menu {
                 list-style: none;
                 margin: 0;
@@ -251,14 +245,150 @@
             }
 
             .floating-admin-menu li {
+                margin-bottom: 4px;
+            }
+
+            .menu-group {
                 margin-bottom: 8px;
             }
 
-            .floating-admin-menu a {
+            .menu-group-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 12px 16px;
+                background: white;
+                border-radius: 10px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                border-left: 4px solid transparent;
+                font-weight: 500;
+                font-size: 0.95rem;
+                color: #333333;
+            }
+
+            .dark-mode .menu-group-header {
+                background: #2d3748;
+                color: #ffffff !important;
+            }
+
+            .menu-group-header:hover {
+                background: rgba(10, 37, 64, 0.08);
+                border-left-color: #f5d742;
+            }
+
+            .dark-mode .menu-group-header:hover {
+                background: rgba(255, 255, 255, 0.1) !important;
+            }
+
+            .menu-group-header .group-title {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .menu-group-header .group-title i {
+                width: 20px;
+                text-align: center;
+                font-size: 1.1rem;
+                color: #0a2540;
+            }
+
+            .dark-mode .menu-group-header .group-title i {
+                color: #f5d742 !important;
+            }
+
+            .menu-group-header .group-arrow {
+                transition: transform 0.3s ease;
+                font-size: 0.8rem;
+                color: #6c757d;
+            }
+
+            .dark-mode .menu-group-header .group-arrow {
+                color: #a0aec0 !important;
+            }
+
+            .menu-group-header.collapsed .group-arrow {
+                transform: rotate(-90deg);
+            }
+
+            .menu-group-items {
+                list-style: none;
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease;
+                max-height: 500px;
+            }
+
+            .menu-group-items.collapsed {
+                max-height: 0;
+            }
+
+            .menu-group-items li {
+                margin-top: 4px;
+                margin-bottom: 0;
+            }
+
+            .menu-group-items a {
                 display: flex;
                 align-items: center;
                 gap: 15px;
-                padding: 14px 16px;
+                padding: 10px 16px 10px 48px;
+                text-decoration: none;
+                color: #333333;
+                background: white;
+                border-radius: 10px;
+                transition: all 0.3s ease;
+                border-left: 4px solid transparent;
+                font-weight: 400;
+                font-size: 0.9rem;
+            }
+
+            .dark-mode .menu-group-items a {
+                background: #2d3748;
+                color: #ffffff !important;
+            }
+
+            .menu-group-items a i {
+                width: 18px;
+                text-align: center;
+                font-size: 0.9rem;
+                color: #6c757d;
+            }
+
+            .dark-mode .menu-group-items a i {
+                color: #f5d742 !important;
+            }
+
+            .menu-group-items a:hover {
+                background: rgba(10, 37, 64, 0.08);
+                transform: translateX(5px);
+                border-left-color: #f5d742;
+            }
+
+            .dark-mode .menu-group-items a:hover {
+                background: rgba(255, 255, 255, 0.15) !important;
+                color: #ffffff !important;
+            }
+
+            .menu-group-items a.active {
+                background: #fff5b8;
+                color: #0a2540;
+                border-left-color: #f5d742;
+                font-weight: 500;
+            }
+
+            .dark-mode .menu-group-items a.active {
+                background: rgba(245, 215, 66, 0.2) !important;
+                color: #f5d742 !important;
+            }
+
+            .floating-admin-menu > li > a {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                padding: 12px 16px;
                 text-decoration: none;
                 color: #333333;
                 background: white;
@@ -269,42 +399,43 @@
                 font-size: 0.95rem;
             }
 
-            .dark-mode .floating-admin-menu a {
+            .dark-mode .floating-admin-menu > li > a {
                 background: #2d3748;
-                color: #e2e8f0;
+                color: #ffffff !important;
             }
 
-            .floating-admin-menu a i {
+            .floating-admin-menu > li > a i {
                 width: 20px;
                 text-align: center;
                 font-size: 1.1rem;
                 color: #0a2540;
             }
 
-            .dark-mode .floating-admin-menu a i {
-                color: #f5d742;
+            .dark-mode .floating-admin-menu > li > a i {
+                color: #f5d742 !important;
             }
 
-            .floating-admin-menu a:hover {
+            .floating-admin-menu > li > a:hover {
                 background: rgba(10, 37, 64, 0.08);
                 transform: translateX(5px);
                 border-left-color: #f5d742;
             }
 
-            .dark-mode .floating-admin-menu a:hover {
-                background: rgba(255, 255, 255, 0.08);
+            .dark-mode .floating-admin-menu > li > a:hover {
+                background: rgba(255, 255, 255, 0.15) !important;
+                color: #ffffff !important;
             }
 
-            .floating-admin-menu a.active {
+            .floating-admin-menu > li > a.active {
                 background: #fff5b8;
                 color: #0a2540;
                 border-left-color: #f5d742;
                 font-weight: 600;
             }
 
-            .dark-mode .floating-admin-menu a.active {
-                background: rgba(245, 215, 66, 0.2);
-                color: #f5d742;
+            .dark-mode .floating-admin-menu > li > a.active {
+                background: rgba(245, 215, 66, 0.2) !important;
+                color: #f5d742 !important;
             }
 
             /* Sección de usuario */
@@ -320,7 +451,6 @@
             .dark-mode .floating-admin-user {
                 background: #2d3748;
                 border-color: #4a5568;
-                color: #e2e8f0;
             }
 
             .floating-admin-user.active {
@@ -342,14 +472,13 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 0.3rem;
+                font-size: 1.2rem;
                 font-weight: 600;
                 flex-shrink: 0;
                 background-size: cover;
                 background-position: center;
                 background-repeat: no-repeat;
             }
-
 
             .user-details {
                 flex: 1;
@@ -360,6 +489,11 @@
                 margin: 0 0 5px 0;
                 font-size: 1rem;
                 font-weight: 600;
+                color: #333333;
+            }
+
+            .dark-mode .user-details h4 {
+                color: #ffffff !important;
             }
 
             .user-details p {
@@ -372,7 +506,7 @@
             }
 
             .dark-mode .user-details p {
-                color: #a0aec0;
+                color: #a0aec0 !important;
             }
 
             .not-logged-in {
@@ -427,7 +561,6 @@
                 background: #e6c93d;
             }
 
-            /* Acciones - LOGOUT VISIBLE */
             .floating-admin-actions {
                 padding: 20px 0 0 0;
                 border-top: 1px solid #e9ecef;
@@ -477,7 +610,6 @@
                 transform: rotate(30deg);
             }
 
-            /* BOTÓN LOGOUT VISIBLE */
             .logout-btn {
                 display: flex !important;
                 align-items: center;
@@ -496,7 +628,7 @@
             .dark-mode .logout-btn {
                 background: rgba(220, 53, 69, 0.15);
                 border-color: rgba(220, 53, 69, 0.3);
-                color: #f56565;
+                color: #f56565 !important;
             }
 
             .logout-btn:hover {
@@ -504,7 +636,11 @@
                 transform: translateY(-2px);
             }
 
-            /* Responsive */
+            .dark-mode .logout-btn:hover {
+                background: rgba(220, 53, 69, 0.25) !important;
+                color: #ff7b7b !important;
+            }
+
             @media (max-width: 768px) {
                 .floating-admin-toggle {
                     top: 15px;
@@ -610,14 +746,70 @@
                 </div>
 
                 <ul class="floating-admin-menu" id="floatingAdminMenu">
+                    <!-- Dashboard (simple) -->
                     <li><a href="../dashAdmin/dashAdmin.html"><i class="fas fa-home"></i> Home</a></li>
-                    <li><a href="../productAdmin/productAdmin.html"><i class="fas fa-box"></i> Products</a></li>
-                    <li><a href="../categoryAdmin/categoryAdmin.html"><i class="fas fa-tags"></i> Categories</a></li>
-                    <li><a href="../brandAdmin/brandAdmin.html"><i class="fas fa-brands fa-apple"></i> Brands</a></li>
-                    <li><a href="../commentAdmin/commentAdmin.html"><i class="fas fa-comments"></i> Comments</a></li>
-                    <li><a href="../carouselAdmin/carouselAdmin.html"><i class="fas fa-images"></i> Carousel</a></li>
-                    <li><a href="../newUserAdmin/newUserAdmin.html"><i class="fas fa-users"></i> Users</a></li>
-                    <li><a href="../posAdmin/posAdmin.html"><i class="fas fa-cash-register"></i> POS</a></li>
+                    
+                    <!-- Grupo: Ventas -->
+                    <li class="menu-group">
+                        <div class="menu-group-header">
+                            <span class="group-title">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Sales</span>
+                            </span>
+                            <i class="fas fa-chevron-down group-arrow"></i>
+                        </div>
+                        <ul class="menu-group-items">
+                            <li><a href="../posAdmin/posAdmin.html"><i class="fas fa-cash-register"></i> POS</a></li>
+                            <li><a href="../salesAdmin/salesAdmin.html"><i class="fas fa-chart-line"></i> Sales History</a></li>
+                            <li><a href="../clientsAdmin/clientsAdmin.html"><i class="fas fa-users"></i> Clients</a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Grupo: Catálogo -->
+                    <li class="menu-group">
+                        <div class="menu-group-header">
+                            <span class="group-title">
+                                <i class="fas fa-box"></i>
+                                <span>Catalog</span>
+                            </span>
+                            <i class="fas fa-chevron-down group-arrow"></i>
+                        </div>
+                        <ul class="menu-group-items">
+                            <li><a href="../productAdmin/productAdmin.html"><i class="fas fa-box"></i> Products</a></li>
+                            <li><a href="../categoryAdmin/categoryAdmin.html"><i class="fas fa-tags"></i> Categories</a></li>
+                            <li><a href="../brandAdmin/brandAdmin.html"><i class="fas fa-tag"></i> Brands</a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Grupo: Contenido -->
+                    <li class="menu-group">
+                        <div class="menu-group-header">
+                            <span class="group-title">
+                                <i class="fas fa-images"></i>
+                                <span>Content</span>
+                            </span>
+                            <i class="fas fa-chevron-down group-arrow"></i>
+                        </div>
+                        <ul class="menu-group-items">
+                            <li><a href="../commentAdmin/commentAdmin.html"><i class="fas fa-comments"></i> Comments</a></li>
+                            <li><a href="../carouselAdmin/carouselAdmin.html"><i class="fas fa-images"></i> Carousel</a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Grupo: Administración -->
+                    <li class="menu-group">
+                        <div class="menu-group-header">
+                            <span class="group-title">
+                                <i class="fas fa-cog"></i>
+                                <span>Administration</span>
+                            </span>
+                            <i class="fas fa-chevron-down group-arrow"></i>
+                        </div>
+                        <ul class="menu-group-items">
+                            <li><a href="../newUserAdmin/newUserAdmin.html"><i class="fas fa-users"></i> Users</a></li>
+                            <li><a href="../permissionAdmin/permissionAdmin.html"><i class="fas fa-shield-alt"></i> Permissions</a></li>
+                        </ul>
+                    </li>
                 </ul>
 
                 <div class="floating-admin-actions">
@@ -638,6 +830,158 @@
         document.body.appendChild(panel);
 
         markActiveLink();
+    }
+
+    // Configurar funcionalidad de grupos desplegables (acordeón)
+    function setupCollapsibleGroups() {
+        const groups = document.querySelectorAll('.menu-group');
+        
+        // Función para cerrar todos los grupos excepto el especificado
+        function closeAllGroups(exceptGroup = null) {
+            groups.forEach(group => {
+                if (exceptGroup !== group) {
+                    const items = group.querySelector('.menu-group-items');
+                    const header = group.querySelector('.menu-group-header');
+                    if (items && !items.classList.contains('collapsed')) {
+                        items.classList.add('collapsed');
+                        if (header) header.classList.add('collapsed');
+                    }
+                }
+            });
+        }
+        
+        groups.forEach(group => {
+            const header = group.querySelector('.menu-group-header');
+            const items = group.querySelector('.menu-group-items');
+            
+            if (!header || !items) return;
+            
+            // Verificar si algún enlace dentro del grupo está activo
+            const hasActiveLink = group.querySelector('a.active');
+            
+            // Si hay un enlace activo, mantener el grupo expandido y cerrar los demás
+            if (hasActiveLink) {
+                items.classList.remove('collapsed');
+                header.classList.remove('collapsed');
+                // Cerrar los demás grupos
+                closeAllGroups(group);
+            } else {
+                // Por defecto, todos los grupos colapsados
+                items.classList.add('collapsed');
+                header.classList.add('collapsed');
+            }
+            
+            // Evento de click para expandir/colapsar con comportamiento de acordeón
+            header.addEventListener('click', (e) => {
+                e.stopPropagation();
+                
+                const isCollapsed = items.classList.contains('collapsed');
+                
+                if (isCollapsed) {
+                    // Abrir este grupo
+                    items.classList.remove('collapsed');
+                    header.classList.remove('collapsed');
+                    // Cerrar todos los demás grupos
+                    closeAllGroups(group);
+                } else {
+                    // Cerrar solo este grupo
+                    items.classList.add('collapsed');
+                    header.classList.add('collapsed');
+                }
+                
+                // Guardar estado en localStorage
+                saveGroupStates();
+            });
+        });
+        
+        // Guardar estado en localStorage
+        function saveGroupStates() {
+            const groups = document.querySelectorAll('.menu-group');
+            const states = {};
+            groups.forEach((group, index) => {
+                const items = group.querySelector('.menu-group-items');
+                states[index] = !items.classList.contains('collapsed');
+            });
+            localStorage.setItem('adminMenuGroupStates', JSON.stringify(states));
+        }
+        
+        function loadGroupStates() {
+            const saved = localStorage.getItem('adminMenuGroupStates');
+            if (!saved) return;
+            
+            try {
+                const states = JSON.parse(saved);
+                const groups = document.querySelectorAll('.menu-group');
+                
+                // Contar cuántos grupos están abiertos
+                let openCount = 0;
+                let lastOpenIndex = -1;
+                
+                groups.forEach((group, index) => {
+                    if (states[index] === true) {
+                        openCount++;
+                        lastOpenIndex = index;
+                    }
+                });
+                
+                // Si hay más de un grupo abierto en el estado guardado, solo mantener el último
+                if (openCount > 1) {
+                    groups.forEach((group, index) => {
+                        const items = group.querySelector('.menu-group-items');
+                        const header = group.querySelector('.menu-group-header');
+                        const shouldBeOpen = (index === lastOpenIndex);
+                        
+                        if (shouldBeOpen) {
+                            items.classList.remove('collapsed');
+                            if (header) header.classList.remove('collapsed');
+                        } else {
+                            items.classList.add('collapsed');
+                            if (header) header.classList.add('collapsed');
+                        }
+                    });
+                } else {
+                    // Aplicar estados normalmente
+                    groups.forEach((group, index) => {
+                        const items = group.querySelector('.menu-group-items');
+                        const header = group.querySelector('.menu-group-header');
+                        
+                        if (states[index]) {
+                            items.classList.remove('collapsed');
+                            if (header) header.classList.remove('collapsed');
+                        } else {
+                            items.classList.add('collapsed');
+                            if (header) header.classList.add('collapsed');
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error('Error loading group states:', e);
+            }
+        }
+        
+        // Cargar estados guardados
+        loadGroupStates();
+        
+        // Si hay un enlace activo en la página, asegurarse de que su grupo esté abierto
+        function ensureActiveGroupOpen() {
+            const activeLink = document.querySelector('.menu-group-items a.active');
+            if (activeLink) {
+                const group = activeLink.closest('.menu-group');
+                if (group) {
+                    const items = group.querySelector('.menu-group-items');
+                    const header = group.querySelector('.menu-group-header');
+                    if (items && items.classList.contains('collapsed')) {
+                        items.classList.remove('collapsed');
+                        if (header) header.classList.remove('collapsed');
+                        // Cerrar los demás grupos
+                        closeAllGroups(group);
+                    }
+                }
+            }
+        }
+        
+        // Ejecutar después de un pequeño delay para asegurar que el DOM esté listo
+        setTimeout(ensureActiveGroupOpen, 100);
     }
 
     function setupEventListeners() {
@@ -701,16 +1045,49 @@
     }
 
     function markActiveLink() {
-        const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-        const menuLinks = document.querySelectorAll('.floating-admin-menu a');
+        const currentPath = window.location.pathname;
         
-        menuLinks.forEach(link => {
+        // Función para verificar si un enlace está activo
+        function isLinkActive(linkPath) {
+            if (!linkPath) return false;
+            // Obtener el nombre del archivo
+            const linkFile = linkPath.split('/').pop();
+            const currentFile = currentPath.split('/').pop();
+            
+            // Comparar archivos
+            if (linkFile === currentFile) return true;
+            
+            // Para enlaces que son directorios
+            if (linkFile === '' && currentPath.endsWith(linkPath.replace('.html', ''))) return true;
+            
+            return false;
+        }
+        
+        // Marcar enlaces simples
+        const simpleLinks = document.querySelectorAll('.floating-admin-menu > li > a');
+        simpleLinks.forEach(link => {
             const href = link.getAttribute('href');
-            const linkPage = href.split('?')[0];
-            if (linkPage === currentPage || 
-                (currentPage === '' && linkPage === 'index.html') ||
-                (currentPage.includes(linkPage.replace('.html', '')))) {
+            if (isLinkActive(href)) {
                 link.classList.add('active');
+            } else {
+                link.classList.remove('active');
+            }
+        });
+        
+        // Marcar enlaces dentro de grupos
+        const groupLinks = document.querySelectorAll('.menu-group-items a');
+        groupLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            if (isLinkActive(href)) {
+                link.classList.add('active');
+                // Expandir el grupo padre
+                const group = link.closest('.menu-group');
+                if (group) {
+                    const items = group.querySelector('.menu-group-items');
+                    const header = group.querySelector('.menu-group-header');
+                    if (items) items.classList.remove('collapsed');
+                    if (header) header.classList.remove('collapsed');
+                }
             } else {
                 link.classList.remove('active');
             }
@@ -730,13 +1107,11 @@
 
         // Función para mostrar SweetAlert2 cuando no hay sesión
         async function showLoginRequiredAlert() {
-            // Verificar si SweetAlert2 está disponible
             if (typeof Swal === 'undefined') {
                 console.warn('SweetAlert2 no está disponible');
                 return;
             }
 
-            // Solo mostrar si no estamos ya en la página de login
             if (!window.location.pathname.includes('/visitors/login/') && 
                 !window.location.pathname.includes('login.html')) {
                 
@@ -775,7 +1150,6 @@
 
         // Función para redirigir al login
         function redirectToLogin() {
-            // Solo redirigir si no estamos ya en la página de login
             if (!window.location.pathname.includes('/visitors/login/') && 
                 !window.location.pathname.includes('login.html')) {
                 console.log('Redirecting to login page...');
@@ -788,13 +1162,11 @@
         // Función para actualizar la UI del usuario
         async function updateUserUI(user) {
             if (user) {
-                // Mostrar sección de usuario, ocultar mensaje de no logueado
                 userSection.classList.add('active');
                 if (notLoggedInSection) notLoggedInSection.classList.remove('active');
                 if (adminMenu) adminMenu.style.display = 'block';
                 logoutBtn.style.display = 'flex';
 
-                // Intentar obtener información adicional de Firestore
                 try {
                     if (db && user.uid) {
                         console.log('Fetching user data from Firestore...');
@@ -804,7 +1176,6 @@
                             const userData = userDoc.data();
                             console.log('User data found:', userData);
 
-                            // Actualizar nombre
                             if (userName) {
                                 userName.textContent = userData.fullName || 
                                                      user.displayName || 
@@ -812,65 +1183,47 @@
                                                      'User';
                             }
 
-                            // Actualizar email
                             if (userEmail) {
                                 userEmail.textContent = user.email || 'No email';
                             }
 
-                            // Actualizar avatar (foto de perfil)
                             if (userAvatar) {
                                 if (userData.photo && userData.photo.startsWith('data:image')) {
-                                    // Usar la foto en base64 desde Firestore
                                     userAvatar.style.backgroundImage = `url('${userData.photo}')`;
                                     userAvatar.textContent = '';
-                                    console.log('Using Firestore photo');
                                 } else if (user.photoURL) {
-                                    // Usar la foto de Firebase Auth
                                     userAvatar.style.backgroundImage = `url('${user.photoURL}')`;
                                     userAvatar.textContent = '';
-                                    console.log('Using Firebase Auth photo');
                                 } else {
-                                    // Usar inicial como fallback
                                     const firstLetter = (userData.fullName || 
                                                        user.displayName || 
                                                        user.email || 'U')[0].toUpperCase();
                                     userAvatar.style.backgroundImage = 'none';
                                     userAvatar.textContent = firstLetter;
-                                    console.log('Using initial as fallback');
                                 }
                             }
                         } else {
-                            // No hay datos en Firestore, usar datos de Firebase Auth
-                            console.log('No user data in Firestore, using Firebase Auth data');
                             updateWithAuthData(user);
                         }
                     } else {
-                        // Firestore no disponible, usar datos de Firebase Auth
-                        console.log('Firestore not available, using Firebase Auth data');
                         updateWithAuthData(user);
                     }
                 } catch (firestoreError) {
                     console.error('Error fetching user data from Firestore:', firestoreError);
-                    // Fallback a datos de Firebase Auth
                     updateWithAuthData(user);
                 }
             } else {
-                // Usuario no autenticado
                 console.log('User not authenticated');
                 userSection.classList.remove('active');
                 if (notLoggedInSection) notLoggedInSection.classList.add('active');
                 if (adminMenu) adminMenu.style.display = 'none';
                 logoutBtn.style.display = 'none';
 
-                // Mostrar SweetAlert2 para informar que necesita login
                 await showLoginRequiredAlert();
-                
-                // Redirigir al login después de mostrar el mensaje
                 setTimeout(redirectToLogin, 2000);
             }
         }
 
-        // Función auxiliar para actualizar con datos de Firebase Auth
         function updateWithAuthData(user) {
             if (userName) {
                 userName.textContent = user.displayName || 
@@ -892,7 +1245,6 @@
             }
         }
 
-        // Verificar autenticación de Firebase
         if (typeof firebase !== 'undefined' && firebase.auth) {
             console.log('✅ Firebase auth disponible, verificando autenticación...');
             
@@ -901,14 +1253,12 @@
                 await updateUserUI(user);
             });
 
-            // También verificar inmediatamente
             const currentUser = firebase.auth().currentUser;
             if (currentUser) {
                 console.log('Current user found:', currentUser.email);
                 await updateUserUI(currentUser);
             } else {
                 console.log('No current user found');
-                // Esperar un momento para ver si la autenticación cambia
                 setTimeout(async () => {
                     const user = firebase.auth().currentUser;
                     if (!user) {
@@ -918,7 +1268,6 @@
             }
         } else {
             console.log('⚠️ Firebase auth no disponible, usando localStorage');
-            // Fallback a localStorage
             const userData = localStorage.getItem('adminUser');
             if (userData) {
                 try {
@@ -941,11 +1290,9 @@
         
         if (!themeToggle) return;
 
-        // Función para actualizar el tema
         function updateTheme() {
             const isDarkMode = document.body.classList.contains('dark-mode');
             
-            // Actualizar ícono y texto
             if (themeIcon) {
                 themeIcon.className = isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
             }
@@ -954,21 +1301,16 @@
             }
         }
 
-        // Configurar evento del botón
         themeToggle.addEventListener('click', function() {
             console.log('Theme toggle button clicked');
             
-            // Verificar si ThemeManager está disponible
             if (window.ThemeManager) {
                 console.log('Using ThemeManager');
                 const newTheme = window.ThemeManager.toggle();
                 console.log('Theme changed to:', newTheme);
-                
-                // Esperar un momento para que se aplique el tema
                 setTimeout(updateTheme, 100);
             } else {
                 console.log('Using manual method');
-                // Método manual
                 const isDarkMode = document.body.classList.contains('dark-mode');
                 const newDarkMode = !isDarkMode;
                 
@@ -976,22 +1318,18 @@
                     document.body.classList.add('dark-mode');
                     document.documentElement.classList.add('dark-mode');
                     localStorage.setItem('theme', 'dark');
-                    console.log('Dark mode activated');
                 } else {
                     document.body.classList.remove('dark-mode');
                     document.documentElement.classList.remove('dark-mode');
                     localStorage.setItem('theme', 'light');
-                    console.log('Light mode activated');
                 }
                 
                 updateTheme();
             }
         });
 
-        // Actualizar inicialmente
         updateTheme();
 
-        // Escuchar cambios si ThemeManager está disponible
         if (window.ThemeManager) {
             window.ThemeManager.onThemeChange((isDarkMode) => {
                 console.log('ThemeManager detected theme change:', isDarkMode);
@@ -999,7 +1337,6 @@
             });
         }
 
-        // También escuchar cambios en la clase del body
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.attributeName === 'class') {
@@ -1017,13 +1354,10 @@
 
         logoutBtn.addEventListener('click', async function() {
             try {
-                // Verificar si SweetAlert2 está disponible
                 if (typeof Swal === 'undefined') {
-                    // Fallback a confirm nativo
                     const confirmLogout = confirm('Are you sure you want to logout?');
                     if (!confirmLogout) return;
                 } else {
-                    // Usar SweetAlert2 para confirmación
                     const result = await Swal.fire({
                         title: '<div style="color: #0a2540;"><i class="fas fa-sign-out-alt"></i> Confirm Logout</div>',
                         html: `
@@ -1049,7 +1383,6 @@
 
                 console.log('Starting logout...');
 
-                // Firebase logout
                 if (typeof firebase !== 'undefined' && firebase.auth) {
                     try {
                         await firebase.auth().signOut();
@@ -1059,7 +1392,6 @@
                     }
                 }
 
-                // Clear localStorage
                 localStorage.removeItem('adminUser');
                 localStorage.removeItem('userToken');
                 localStorage.removeItem('firebase:authUser');
@@ -1067,7 +1399,6 @@
                 localStorage.removeItem('isLoggedIn');
                 console.log('LocalStorage cleared');
 
-                // Mostrar mensaje de éxito con SweetAlert2
                 if (typeof Swal !== 'undefined') {
                     await Swal.fire({
                         icon: 'success',
@@ -1094,7 +1425,6 @@
                     alert('Logout successful! Redirecting to login...');
                 }
 
-                // Redirect to login
                 console.log('Redirecting to login...');
                 setTimeout(() => {
                     window.location.href = '/users/visitors/login/login.html';
@@ -1103,7 +1433,6 @@
             } catch (error) {
                 console.error('❌ Logout error:', error);
                 
-                // Mostrar error con SweetAlert2 si está disponible
                 if (typeof Swal !== 'undefined') {
                     await Swal.fire({
                         icon: 'error',
