@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Import Products from Excel | Lucky Appliances</title>
+    <link rel="icon" href="/assets/icons/Logo Lucky Apliances.png" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px 20px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #0a2540, #f5d742);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #0a2540;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .header h1 i {
+            color: #f5d742;
+        }
+
+        .header p {
+            color: #6c757d;
+            font-size: 1rem;
+        }
+
+        /* Upload Area */
+        .upload-area {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            border: 2px dashed #dee2e6;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 30px;
+        }
+
+        .upload-area:hover {
+            border-color: #f5d742;
+            background: #fffbf0;
+        }
+
+        .upload-area.drag-over {
+            border-color: #f5d742;
+            background: #fff8e7;
+            transform: scale(1.01);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: #f5d742;
+            margin-bottom: 20px;
+        }
+
+        .upload-area h3 {
+            color: #0a2540;
+            margin-bottom: 10px;
+        }
+
+        .upload-area p {
+            color: #6c757d;
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn-upload {
+            background: linear-gradient(135deg, #0a2540, #1a365d);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-upload:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(10,37,64,0.3);
+        }
+
+        /* Preview Section */
+        .preview-section {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .preview-section h3 {
+            color: #0a2540;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .preview-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .stat-card {
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .stat-card i {
+            font-size: 1.8rem;
+            color: #f5d742;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #0a2540;
+        }
+
+        .stat-card .label {
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+
+        .preview-table-container {
+            max-height: 400px;
+            overflow-x: auto;
+            overflow-y: auto;
+            border-radius: 12px;
+            border: 1px solid #dee2e6;
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .preview-table th {
+            background: #0a2540;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .preview-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .preview-table tr:hover {
+            background: #fffbf0;
+        }
+
+        /* Actions */
+        .actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f5d742, #e5c730);
+            color: #0a2540;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245,215,66,0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #e9ecef;
+            color: #495057;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #dee2e6;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        /* Progress */
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f5d742, #e5c730);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        /* Log */
+        .log-section {
+            background: #1e1e2f;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .log-section h4 {
+            color: #f5d742;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .log-entry {
+            font-family: monospace;
+            font-size: 0.8rem;
+            padding: 6px 10px;
+            border-bottom: 1px solid #2d2d3a;
+            color: #e2e8f0;
+        }
+
+        .log-entry.success {
+            color: #28a745;
+        }
+
+        .log-entry.error {
+            color: #dc3545;
+        }
+
+        .log-entry.info {
+            color: #17a2b8;
+        }
+
+        .log-entry.warning {
+            color: #ffc107;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.5rem;
+                flex-direction: column;
+            }
+            
+            .upload-area {
+                padding: 30px 20px;
+            }
+            
+            .preview-stats {
+                flex-direction: column;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+            
+            .btn-primary, .btn-secondary, .btn-danger {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .fa-spinner {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                <i class="fas fa-file-excel"></i>
+                Import Products from Excel
+            </h1>
+            <p>Upload your Excel file to import products into the inventory</p>
+        </div>
+
+        <!-- Upload Area -->
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">
+                <i class="fas fa-cloud-upload-alt"></i>
+            </div>
+            <h3>Drag & Drop your Excel file here</h3>
+            <p>or click to browse</p>
+            <input type="file" id="fileInput" class="file-input" accept=".xlsx, .xls, .csv">
+            <button class="btn-upload" id="browseBtn">
+                <i class="fas fa-folder-open"></i>
+                Select File
+            </button>
+            <p style="margin-top: 15px; font-size: 0.8rem;">
+                <i class="fas fa-info-circle"></i> Supports .xlsx, .xls, .csv files
+            </p>
+        </div>
+
+        <!-- Preview Section -->
+        <div class="preview-section" id="previewSection">
+            <h3>
+                <i class="fas fa-table"></i>
+                Data Preview
+            </h3>
+            <div class="preview-stats" id="previewStats">
+                <div class="stat-card">
+                    <i class="fas fa-boxes"></i>
+                    <div class="number" id="totalRows">0</div>
+                    <div class="label">Total Rows</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-tag"></i>
+                    <div class="number" id="uniqueProducts">0</div>
+                    <div class="label">Unique Products</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-microchip"></i>
+                    <div class="number" id="totalSerials">0</div>
+                    <div class="label">Serial Numbers</div>
+                </div>
+            </div>
+            <div class="preview-table-container">
+                <table class="preview-table" id="previewTable">
+                    <thead>
+                        <tr>
+                            <th>Model</th>
+                            <th>SKU</th>
+                            <th>Brand</th>
+                            <th>Category</th>
+                            <th>Subcategory</th>
+                            <th>Description</th>
+                            <th>Sale Price</th>
+                            <th>Serial Number</th>
+                        </tr>
+                    </thead>
+                    <tbody id="previewBody"></tbody>
+                </table>
+            </div>
+            <div class="actions">
+                <button class="btn-secondary" id="cancelBtn">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </button>
+                <button class="btn-primary" id="importBtn">
+                    <i class="fas fa-upload"></i>
+                    Import to Database
+                </button>
+            </div>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Preparing import...</div>
+        </div>
+
+        <!-- Log Section -->
+        <div class="log-section" id="logSection">
+            <h4>
+                <i class="fas fa-terminal"></i>
+                Import Log
+            </h4>
+            <div id="logEntries"></div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Lucky Appliances Inventory System | Import products from Excel</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <script type="module">
+        import { ProductManager } from '/classes/product.js';
+
+        const Swal = window.Swal;
+        
+        // Constants
+        const DEFAULT_PROVIDER_ID = 'm4qIyEAYP0UmHqA7qlyN';
+        
+        // DOM Elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const browseBtn = document.getElementById('browseBtn');
+        const previewSection = document.getElementById('previewSection');
+        const previewBody = document.getElementById('previewBody');
+        const totalRowsSpan = document.getElementById('totalRows');
+        const uniqueProductsSpan = document.getElementById('uniqueProducts');
+        const totalSerialsSpan = document.getElementById('totalSerials');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const importBtn = document.getElementById('importBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const logSection = document.getElementById('logSection');
+        const logEntries = document.getElementById('logEntries');
+        
+        // State
+        let parsedData = [];
+        let productsMap = new Map(); // Map by model to aggregate serials
+        let productManager = null;
+        
+        // Add log entry
+        function addLog(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> [${timestamp}] ${message}`;
+            logEntries.appendChild(entry);
+            logEntries.scrollTop = logEntries.scrollHeight;
+        }
+        
+        // Clear logs
+        function clearLogs() {
+            logEntries.innerHTML = '';
+        }
+        
+        // Update progress
+        function updateProgress(current, total, message) {
+            const percent = (current / total) * 100;
+            progressFill.style.width = `${percent}%`;
+            progressText.textContent = `${message} (${current}/${total})`;
+        }
+        
+        // Parse Excel file
+        async function parseExcelFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+                        
+                        // Skip header row (row 1) and empty rows
+                        const rows = jsonData.slice(1).filter(row => {
+                            // Check if row has at least some data
+                            return row && row.length > 0 && row.some(cell => cell && cell.toString().trim() !== '');
+                        });
+                        
+                        console.log(`Parsed ${rows.length} rows from Excel`);
+                        resolve(rows);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                
+                reader.onerror = reject;
+                reader.readAsArrayBuffer(file);
+            });
+        }
+        
+        // Process rows from Excel
+        function processRows(rows) {
+            // Column indices (0-based)
+            // A: ITEM (ignore)
+            // B: MARCA -> Brand
+            // C: MODEL -> Model
+            // D: CATEGORY -> Category
+            // E: SUBCATEGORY -> Subcategory
+            // F: DESCRIPTION EN (English description) -> Description
+            // G: DESCRIPTION (Spanish) - ignore
+            // H: SERIAL NUMBER -> Serial
+            // I: PURCHASE PRICE - ignore
+            // J: SALE PRICE -> ourPrice
+            // K: COMENTARIOS - ignore
+            
+            const products = new Map(); // key: model, value: product data with serials array
+            
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                
+                const model = row[2] ? row[2].toString().trim() : '';
+                const brand = row[1] ? row[1].toString().trim() : '';
+                const category = row[3] ? row[3].toString().trim() : '';
+                const subcategory = row[4] ? row[4].toString().trim() : '';
+                const description = row[5] ? row[5].toString().trim() : ''; // F column - English description
+                const serialNumber = row[7] ? row[7].toString().trim() : '';
+                const salePrice = row[9] ? parseFloat(row[9]) || 0 : 0;
+                
+                // Skip rows without model or without serial number
+                if (!model) {
+                    addLog(`Row ${i + 2}: Skipped - No model number`, 'warning');
+                    continue;
+                }
+                
+                if (!serialNumber) {
+                    addLog(`Row ${i + 2}: Model ${model} - No serial number, skipping`, 'warning');
+                    continue;
+                }
+                
+                // Check if we already have this product
+                if (!products.has(model)) {
+                    products.set(model, {
+                        model: model,
+                        sku: model, // Use model as SKU for now
+                        brandId: brand,
+                        categoryId: category,
+                        subcategory: subcategory,
+                        description: description,
+                        salePrice: salePrice,
+                        serials: []
+                    });
+                }
+                
+                const product = products.get(model);
+                product.serials.push(serialNumber);
+                
+                // Update price if this row has a higher price (or if first)
+                if (salePrice > product.salePrice) {
+                    product.salePrice = salePrice;
+                }
+            }
+            
+            return products;
+        }
+        
+        // Get or create brand ID from name
+        async function getBrandId(brandName, brandsMap) {
+            if (!brandName) return '';
+            
+            // Find brand by name (case insensitive)
+            const foundBrand = Object.entries(brandsMap).find(([id, name]) => 
+                name.toLowerCase() === brandName.toLowerCase()
+            );
+            
+            if (foundBrand) {
+                return foundBrand[0];
+            }
+            
+            addLog(`Brand "${brandName}" not found in database`, 'warning');
+            return '';
+        }
+        
+        // Get or create category ID from name
+        async function getCategoryId(categoryName, categoriesMap) {
+            if (!categoryName) return '';
+            
+            // Find category by name (case insensitive)
+            const foundCategory = Object.entries(categoriesMap).find(([id, name]) => 
+                name.toLowerCase() === categoryName.toLowerCase()
+            );
+            
+            if (foundCategory) {
+                return foundCategory[0];
+            }
+            
+            addLog(`Category "${categoryName}" not found in database`, 'warning');
+            return '';
+        }
+        
+        // Import products to Firebase
+        async function importProducts(products) {
+            const productsArray = Array.from(products.values());
+            const total = productsArray.length;
+            let imported = 0;
+            let updated = 0;
+            let failed = 0;
+            
+            clearLogs();
+            addLog(`Starting import of ${total} unique products with ${productsArray.reduce((sum, p) => sum + p.serials.length, 0)} serial numbers`, 'info');
+            
+            // Get existing products to check for duplicates
+            const existingProducts = productManager.products;
+            const existingByModel = new Map();
+            existingProducts.forEach(p => {
+                existingByModel.set(p.Model, p);
+            });
+            
+            for (let i = 0; i < productsArray.length; i++) {
+                const productData = productsArray[i];
+                updateProgress(i + 1, total, `Processing product ${i + 1}/${total}: ${productData.model}`);
+                
+                try {
+                    // Get brand ID
+                    let brandId = productData.brandId;
+                    if (brandId && !brandId.startsWith('http') && brandId.length > 10) {
+                        // If it's already an ID, use as is
+                    } else {
+                        const brandsMap = productManager.getBrandsMap();
+                        brandId = await getBrandId(productData.brandId, brandsMap);
+                    }
+                    
+                    // Get category ID
+                    let categoryId = productData.categoryId;
+                    if (categoryId && !categoryId.startsWith('http') && categoryId.length > 10) {
+                        // If it's already an ID, use as is
+                    } else {
+                        const categoriesMap = productManager.getCategoriesMap();
+                        categoryId = await getCategoryId(productData.categoryId, categoriesMap);
+                    }
+                    
+                    // Check if product already exists
+                    const existingProduct = existingByModel.get(productData.model);
+                    
+                    if (existingProduct) {
+                        // Update existing product with new serials
+                        const existingSerials = existingProduct.unidades?.map(u => u.numeroSerie) || [];
+                        const newSerials = productData.serials.filter(s => !existingSerials.includes(s));
+                        
+                        if (newSerials.length > 0) {
+                            const updatedSerials = [...existingSerials, ...newSerials];
+                            const unidades = updatedSerials.map(serial => ({
+                                numeroSerie: serial,
+                                historial: [{
+                                    fechaMovimiento: new Date(),
+                                    movimiento: 1,
+                                    descripcionMovimiento: 'Warehouse entry',
+                                    idUsuario: productManager.getCurrentUserId(),
+                                    tipoMovimiento: 'entrada'
+                                }]
+                            }));
+                            
+                            await productManager.updateProduct(existingProduct.id, {
+                                unidades: unidades,
+                                nuestroPrecio: productData.salePrice || existingProduct.nuestroPrecio,
+                                fechaActualizacion: new Date()
+                            });
+                            
+                            updated++;
+                            addLog(`Updated product "${productData.model}" - Added ${newSerials.length} new serial(s)`, 'success');
+                        } else {
+                            addLog(`Product "${productData.model}" already exists - No new serials to add`, 'info');
+                        }
+                    } else {
+                        // Create new product
+                        const unidades = productData.serials.map(serial => ({
+                            numeroSerie: serial,
+                            historial: [{
+                                fechaMovimiento: new Date(),
+                                movimiento: 1,
+                                descripcionMovimiento: 'Warehouse entry',
+                                idUsuario: productManager.getCurrentUserId(),
+                                tipoMovimiento: 'entrada'
+                            }]
+                        }));
+                        
+                        await productManager.addProduct({
+                            Model: productData.model,
+                            SKU: productData.sku || productData.model,
+                            Brand: brandId,
+                            Category: categoryId,
+                            Provider: DEFAULT_PROVIDER_ID,
+                            Subcategory: productData.subcategory || '',
+                            ItemDescription: productData.description || '',
+                            especificaciones: '',
+                            Location: '',
+                            UnitWeight: 0,
+                            nuestroPrecio: productData.salePrice,
+                            precioCompetencia: 0,
+                            unidades: unidades,
+                            images: []
+                        });
+                        
+                        imported++;
+                        addLog(`Created new product "${productData.model}" with ${productData.serials.length} serial(s)`, 'success');
+                    }
+                    
+                } catch (error) {
+                    failed++;
+                    addLog(`Error processing product "${productData.model}": ${error.message}`, 'error');
+                    console.error(error);
+                }
+            }
+            
+            updateProgress(total, total, 'Import completed!');
+            
+            addLog(`=== IMPORT SUMMARY ===`, 'info');
+            addLog(`✅ New products created: ${imported}`, 'success');
+            addLog(`🔄 Existing products updated: ${updated}`, 'success');
+            addLog(`❌ Failed: ${failed}`, failed > 0 ? 'error' : 'info');
+            
+            return { imported, updated, failed, total };
+        }
+        
+        // Display preview
+        function displayPreview(products) {
+            const productsArray = Array.from(products.values());
+            const totalRows = productsArray.reduce((sum, p) => sum + p.serials.length, 0);
+            
+            totalRowsSpan.textContent = totalRows;
+            uniqueProductsSpan.textContent = productsArray.length;
+            totalSerialsSpan.textContent = totalRows;
+            
+            previewBody.innerHTML = '';
+            
+            productsArray.forEach(product => {
+                product.serials.forEach(serial => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${escapeHtml(product.model)}</strong></td>
+                        <td>${escapeHtml(product.sku)}</td>
+                        <td>${escapeHtml(product.brandId)}</td>
+                        <td>${escapeHtml(product.categoryId)}</td>
+                        <td>${escapeHtml(product.subcategory)}</td>
+                        <td title="${escapeHtml(product.description)}">${truncate(escapeHtml(product.description), 50)}</td>
+                        <td>$${product.salePrice.toFixed(2)}</td>
+                        <td><code>${escapeHtml(serial)}</code></td>
+                    `;
+                    previewBody.appendChild(row);
+                });
+            });
+        }
+        
+        // Helper functions
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+        
+        function truncate(str, maxLength) {
+            if (!str) return '';
+            if (str.length <= maxLength) return str;
+            return str.substring(0, maxLength) + '...';
+        }
+        
+        // Reset UI
+        function resetUI() {
+            previewSection.style.display = 'none';
+            progressContainer.style.display = 'none';
+            logSection.style.display = 'none';
+            parsedData = [];
+            productsMap.clear();
+            fileInput.value = '';
+            clearLogs();
+        }
+        
+        // Handle file selection
+        async function handleFile(file) {
+            if (!file) return;
+            
+            if (!file.name.match(/\.(xlsx|xls|csv)$/i)) {
+                Swal.fire('Invalid File', 'Please select an Excel file (.xlsx, .xls, or .csv)', 'error');
+                return;
+            }
+            
+            addLog(`Loading file: ${file.name}`, 'info');
+            
+            try {
+                const rows = await parseExcelFile(file);
+                addLog(`Parsed ${rows.length} rows from Excel file`, 'success');
+                
+                productsMap = processRows(rows);
+                addLog(`Found ${productsMap.size} unique products with ${Array.from(productsMap.values()).reduce((sum, p) => sum + p.serials.length, 0)} serial numbers`, 'success');
+                
+                displayPreview(productsMap);
+                previewSection.style.display = 'block';
+                logSection.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error parsing file:', error);
+                Swal.fire('Error', `Failed to parse file: ${error.message}`, 'error');
+                addLog(`Error parsing file: ${error.message}`, 'error');
+            }
+        }
+        
+        // Initialize ProductManager
+        async function initProductManager() {
+            try {
+                productManager = new ProductManager();
+                await productManager.loadBrandsAndCategoriesAndProviders();
+                await productManager.loadProducts();
+                addLog('ProductManager initialized successfully', 'success');
+                addLog(`Loaded ${productManager.products.length} existing products`, 'info');
+                return true;
+            } catch (error) {
+                console.error('Error initializing ProductManager:', error);
+                addLog(`Error initializing ProductManager: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        // Event Listeners
+        browseBtn.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('click', (e) => {
+            if (e.target === uploadArea || e.target.closest('.upload-icon') || e.target.closest('h3') || e.target.closest('p')) {
+                fileInput.click();
+            }
+        });
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(file);
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+        
+        cancelBtn.addEventListener('click', () => {
+            resetUI();
+        });
+        
+        importBtn.addEventListener('click', async () => {
+            if (productsMap.size === 0) {
+                Swal.fire('No Data', 'No products to import', 'warning');
+                return;
+            }
+            
+            // Confirm import
+            const confirmResult = await Swal.fire({
+                title: 'Confirm Import',
+                html: `
+                    <p>You are about to import:</p>
+                    <ul style="text-align: left;">
+                        <li><strong>${productsMap.size}</strong> unique products</li>
+                        <li><strong>${Array.from(productsMap.values()).reduce((sum, p) => sum + p.serials.length, 0)}</strong> serial numbers</li>
+                    </ul>
+                    <p>Existing products will be updated with new serials.</p>
+                    <p class="text-warning">This action cannot be undone!</p>
+                `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Import',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#f5d742'
+            });
+            
+            if (!confirmResult.isConfirmed) return;
+            
+            // Initialize ProductManager if not already
+            if (!productManager) {
+                const initialized = await initProductManager();
+                if (!initialized) {
+                    Swal.fire('Error', 'Failed to initialize database connection', 'error');
+                    return;
+                }
+            }
+            
+            // Show progress
+            progressContainer.style.display = 'block';
+            progressFill.style.width = '0%';
+            importBtn.disabled = true;
+            cancelBtn.disabled = true;
+            
+            try {
+                const result = await importProducts(productsMap);
+                
+                Swal.fire({
+                    title: 'Import Complete',
+                    html: `
+                        <p>Import completed successfully!</p>
+                        <ul style="text-align: left;">
+                            <li>✅ New products created: ${result.imported}</li>
+                            <li>🔄 Existing products updated: ${result.updated}</li>
+                            <li>❌ Failed: ${result.failed}</li>
+                        </ul>
+                    `,
+                    icon: result.failed > 0 ? 'warning' : 'success',
+                    confirmButtonText: 'OK'
+                });
+                
+            } catch (error) {
+                console.error('Import error:', error);
+                addLog(`Import failed: ${error.message}`, 'error');
+                Swal.fire('Import Failed', error.message, 'error');
+            } finally {
+                importBtn.disabled = false;
+                cancelBtn.disabled = false;
+            }
+        });
+        
+        // Auto initialize on load
+        initProductManager();
+        
+        // Log initialization
+        addLog('Import page loaded', 'info');
+    </script>
+</body>
+</html>
