@@ -32,6 +32,7 @@ class PDFGenerator {
 
         return this.doc.output("blob")
     }
+    
     async addHeader(saleData) {
         // Logo a la derecha - más pequeño y arriba
         try {
@@ -93,6 +94,7 @@ class PDFGenerator {
             img.src = url
         })
     }
+    
     addCustomerInfo(saleData) {
         // Start Y después del header (reducido)
         let startY = this.doc.headerEndY + 2
@@ -127,23 +129,33 @@ class PDFGenerator {
     }
 
     addProductsTable(products) {
-        // Columnas: S/N, DESCRIPTION, MODEL, SKU, PRICE
+        // Columnas: S/N, DESCRIPTION, MODEL, PRICE (sin SKU)
         const columns = [
             "S/N",
             "DESCRIPTION",
             "MODEL",
-            "SKU",
             "PRICE"
         ]
 
         const rows = []
 
         products.forEach(product => {
+            // Obtener la descripción de manera más inteligente
+            let description = "N/A"
+            if (product.description && product.description !== "N/A") {
+                description = product.description
+            } else if (product.ItemDescription && product.ItemDescription !== "N/A") {
+                description = product.ItemDescription
+            } else if (product.model && product.model !== "N/A") {
+                description = product.model
+            } else {
+                description = "Product"
+            }
+            
             rows.push([
                 product.serialNumber || "N/A",
-                product.description || product.ItemDescription || "N/A", // Usa ItemDescription
+                description,
                 product.model || "N/A",
-                product.sku || "N/A",
                 `$${Number(product.price).toFixed(2)}`
             ])
         })
@@ -173,11 +185,10 @@ class PDFGenerator {
                 cellPadding: 3
             },
             columnStyles: {
-                0: { cellWidth: 32, halign: 'center' }, // S/N - más pequeño
-                1: { cellWidth: 58, halign: 'left' },   // DESCRIPTION - más ancho
+                0: { cellWidth: 32, halign: 'center' }, // S/N
+                1: { cellWidth: 85, halign: 'left' },   // DESCRIPTION - más ancho (antes 58)
                 2: { cellWidth: 38, halign: 'left' },   // MODEL
-                3: { cellWidth: 28, halign: 'center' }, // SKU
-                4: { cellWidth: 28, halign: 'right' }   // PRICE
+                3: { cellWidth: 28, halign: 'right' }   // PRICE
             },
             margin: { left: 20, right: 20 },
             tableWidth: 170, // Centrar la tabla
@@ -186,6 +197,7 @@ class PDFGenerator {
             }
         })
     }
+    
     addAdditionalCharges(charges) {
         const finalY = this.doc.lastProductsTableY + 3 // Reduced margin
         
@@ -230,6 +242,7 @@ class PDFGenerator {
             }
         })
     }
+    
     addTotals(saleData) {
         let startY
 
@@ -295,6 +308,7 @@ class PDFGenerator {
 
         this.doc.lastTotalsY = currentY + 6
     }
+    
     addTermsAndConditions(terms) {
         let startY;
         
@@ -340,6 +354,7 @@ class PDFGenerator {
         
         this.doc.lastTermsY = yPosition;
     }
+    
     addFooter() {
         const pages = this.doc.internal.getNumberOfPages()
 

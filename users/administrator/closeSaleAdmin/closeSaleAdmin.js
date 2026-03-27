@@ -1002,7 +1002,7 @@ async function completeSale() {
             denyButtonColor: '#28a745'
         }).then((result) => {
             if (result.isDenied) {
-                window.location.href = '../sales/salesAdmin.html';
+                window.location.href = '../salesAdmin/salesAdmin.html';
             } else if (result.dismiss === Swal.DismissReason.cancel) {
                 window.location.href = '../posAdmin/posAdmin.html';
             }
