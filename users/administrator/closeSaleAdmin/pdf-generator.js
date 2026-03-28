@@ -36,7 +36,7 @@ class PDFGenerator {
     async addHeader(saleData) {
         // Logo a la derecha - más pequeño y arriba
         try {
-            const logoPath = '/assets/icons/luckyPDF.png'
+            const logoPath = '/assets/icons/luckyPDF2.png'
             const logoImage = await this.loadImage(logoPath)
             this.doc.addImage(logoImage, 'PNG', 140, 3, 65, 65)
         } catch (error) {

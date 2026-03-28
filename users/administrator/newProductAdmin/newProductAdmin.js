@@ -21,8 +21,14 @@ async function initializeForm() {
         // Load brands, categories and providers
         await productManager.loadBrandsAndCategoriesAndProviders();
         
+        // Load existing products to check SKU duplicates
+        await productManager.loadProducts();
+        
         // Populate dropdowns
         populateDropdowns();
+        
+        // Set up model input to generate SKU automatically
+        setupAutoSKUGeneration();
         
         showLoading(false);
     } catch (error) {
@@ -59,6 +65,117 @@ function populateDropdowns() {
         option.textContent = `${provider.nombre} (${provider.idInterno || 'No ID'})`;
         providerSelect.appendChild(option);
     });
+}
+
+function setupAutoSKUGeneration() {
+    const modelInput = document.getElementById('Model');
+    const skuInput = document.getElementById('SKU');
+    
+    if (!modelInput || !skuInput) return;
+    
+    // Generate SKU based on model
+    function generateSKUFromModel(model) {
+        if (!model || model.trim() === '') return '';
+        
+        // Clean the model: remove special characters, trim spaces, convert to uppercase
+        let cleanModel = model.trim().toUpperCase();
+        
+        // Replace spaces with hyphens
+        cleanModel = cleanModel.replace(/\s+/g, '-');
+        
+        // Remove any characters that might cause issues
+        cleanModel = cleanModel.replace(/[^A-Z0-9\-]/g, '');
+        
+        // Add -1 suffix
+        const baseSKU = `${cleanModel}-1`;
+        
+        // Check if SKU already exists and generate unique version if needed
+        return generateUniqueSKU(baseSKU);
+    }
+    
+    // Generate unique SKU by checking existing products
+    function generateUniqueSKU(baseSKU) {
+        let uniqueSKU = baseSKU;
+        let counter = 1;
+        
+        // Check if SKU exists in loaded products
+        while (productManager.products.some(p => p.SKU === uniqueSKU)) {
+            counter++;
+            uniqueSKU = `${baseSKU.split('-')[0]}-${counter}`;
+        }
+        
+        return uniqueSKU;
+    }
+    
+    // Auto-generate SKU when model changes (with debounce)
+    let debounceTimeout;
+    modelInput.addEventListener('input', function() {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+            const model = modelInput.value;
+            if (model && model.trim() !== '') {
+                const generatedSKU = generateSKUFromModel(model);
+                skuInput.value = generatedSKU;
+                skuInput.dispatchEvent(new Event('change'));
+            } else {
+                skuInput.value = '';
+            }
+        }, 300);
+    });
+    
+    // Also generate when model loses focus (instant)
+    modelInput.addEventListener('blur', function() {
+        const model = modelInput.value;
+        if (model && model.trim() !== '') {
+            const generatedSKU = generateSKUFromModel(model);
+            skuInput.value = generatedSKU;
+            skuInput.dispatchEvent(new Event('change'));
+        }
+    });
+    
+    // Allow manual editing of SKU, but validate
+    skuInput.addEventListener('blur', function() {
+        const sku = skuInput.value.trim();
+        if (sku && sku !== '') {
+            // Check if SKU is valid
+            if (!/^[A-Z0-9\-]+$/i.test(sku)) {
+                showWarning('SKU should contain only letters, numbers, and hyphens');
+                return;
+            }
+            
+            // Check if SKU already exists
+            const existingProduct = productManager.products.find(p => p.SKU === sku);
+            if (existingProduct) {
+                showWarning(`SKU "${sku}" already exists for product "${existingProduct.Model}". Please use a different SKU.`);
+                skuInput.classList.add('is-invalid');
+            } else {
+                skuInput.classList.remove('is-invalid');
+            }
+        }
+    });
+    
+    // Add visual feedback for SKU field
+    const style = document.createElement('style');
+    style.textContent = `
+        .is-invalid {
+            border-color: #dc3545 !important;
+            background-color: rgba(220, 53, 69, 0.05) !important;
+        }
+        .sku-auto-generated {
+            background-color: rgba(245, 215, 66, 0.1);
+            border-color: var(--accent);
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Add indicator that SKU is auto-generated
+    const skuGroup = skuInput.closest('.form-group');
+    if (skuGroup && !skuGroup.querySelector('.sku-hint')) {
+        const hint = document.createElement('small');
+        hint.className = 'form-hint sku-hint';
+        hint.innerHTML = '<i class="fas fa-magic"></i> SKU is automatically generated from the model. You can edit it manually if needed.';
+        skuGroup.appendChild(hint);
+    }
 }
 
 function setupEventListeners() {
@@ -387,6 +504,24 @@ async function handleFormSubmit(e) {
         return;
     }
     
+    // Validate SKU format
+    if (!/^[A-Z0-9\-]+$/i.test(SKU)) {
+        showWarning('SKU should contain only letters, numbers, and hyphens');
+        document.getElementById('SKU').focus();
+        return;
+    }
+    
+    // Check if SKU already exists
+    const existingProduct = productManager.products.find(p => p.SKU === SKU);
+    if (existingProduct) {
+        showWarning(`SKU "${SKU}" already exists for product "${existingProduct.Model}". Please use a different SKU.`);
+        document.getElementById('SKU').focus();
+        document.getElementById('SKU').classList.add('is-invalid');
+        return;
+    } else {
+        document.getElementById('SKU').classList.remove('is-invalid');
+    }
+    
     if (!Brand) {
         showWarning('Please select a brand');
         document.getElementById('Brand').focus();
@@ -493,7 +628,8 @@ async function handleFormSubmit(e) {
         const { isConfirmed } = await Swal.fire({
             icon: 'success',
             title: 'Success!',
-            text: `Product created successfully with ${unitsList.length} unit(s)`,
+            html: `Product <strong>${escapeHtml(Model)}</strong> created successfully with ${unitsList.length} unit(s)<br>
+                   <small>SKU: ${escapeHtml(SKU)}</small>`,
             showCancelButton: true,
             confirmButtonText: 'Create Another',
             cancelButtonText: 'View Products',
@@ -530,6 +666,9 @@ function resetForm() {
     
     // Reset counts
     document.getElementById('imagesCount').textContent = `0/${MAX_IMAGES}`;
+    
+    // Remove invalid class from SKU
+    document.getElementById('SKU').classList.remove('is-invalid');
     
     // Focus first field
     document.getElementById('Model').focus();

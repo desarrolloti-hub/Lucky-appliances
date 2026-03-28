@@ -912,3 +912,207 @@ body {
         padding: 8px 12px;
     }
 }
+
+/* Discount Section */
+.discount-section {
+    background: var(--light);
+    border-radius: var(--border-radius-sm);
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid var(--gray);
+}
+
+.discount-section h3 {
+    font-size: 1rem;
+    color: var(--primary);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.discount-section h3 i {
+    color: var(--accent);
+}
+
+.discount-controls {
+    display: flex;
+    gap: 15px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.discount-controls .form-group {
+    margin-bottom: 0;
+}
+
+.btn-apply-discount {
+    padding: 12px 20px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition);
+    height: 46px;
+}
+
+.btn-apply-discount:hover {
+    background: var(--accent-dark);
+    transform: translateY(-2px);
+}
+
+.discount-info {
+    margin-top: 15px;
+    padding: 12px;
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: var(--border-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.discount-info i {
+    color: var(--accent);
+}
+
+.btn-clear-discount {
+    background: none;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    padding: 5px 12px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: var(--transition);
+}
+
+.btn-clear-discount:hover {
+    background: var(--danger);
+    color: white;
+}
+
+/* Payment Section */
+.payment-section {
+    background: var(--light);
+    border-radius: var(--border-radius-sm);
+    padding: 15px;
+    border: 1px solid var(--gray);
+}
+
+.payment-section h3 {
+    font-size: 1rem;
+    color: var(--primary);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.payment-section h3 i {
+    color: var(--accent);
+}
+
+.payment-methods {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.payment-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--white);
+    border: 1px solid var(--gray);
+    border-radius: 50px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.payment-option:hover {
+    border-color: var(--accent);
+    background: rgba(76, 175, 80, 0.05);
+}
+
+.payment-option input[type="radio"] {
+    margin: 0;
+    cursor: pointer;
+}
+
+.payment-option i {
+    color: var(--accent);
+}
+
+.payment-option span {
+    font-size: 0.9rem;
+}
+
+.payment-details {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--gray);
+}
+
+.payment-detail-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    animation: fadeIn 0.3s ease;
+}
+
+.payment-summary-info {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background: var(--white);
+    border-radius: var(--border-radius-sm);
+    font-weight: 500;
+}
+
+.payment-summary-info .remaining-amount {
+    color: var(--danger);
+}
+
+/* Summary row with discount */
+.summary-row.discount-row {
+    color: var(--accent);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .discount-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .btn-apply-discount {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .payment-methods {
+        gap: 10px;
+    }
+    
+    .payment-option {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+    
+    .payment-detail-fields {
+        grid-template-columns: 1fr;
+    }
+}

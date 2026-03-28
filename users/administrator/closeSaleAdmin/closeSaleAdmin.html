@@ -137,7 +137,108 @@
                     </div>
                 </div>
             </section>
-
+            <!-- Panel 3.5: Discount & Payment -->
+            <section class="sale-section discount-payment-panel">
+                <h2 class="section-title"><i class="fas fa-tag"></i> Discount & Payment</h2>
+                
+                <div class="discount-section">
+                    <h3><i class="fas fa-percent"></i> Discount (applied to subtotal)</h3>
+                    <div class="discount-controls">
+                        <div class="form-group" style="flex: 1;">
+                            <label><i class="fas fa-dollar-sign"></i> Discount Amount ($)</label>
+                            <input type="number" id="discountAmount" class="form-control" min="0" step="0.01" value="0" placeholder="0.00">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label><i class="fas fa-percent"></i> Discount (%)</label>
+                            <input type="number" id="discountPercentage" class="form-control" min="0" max="100" step="0.1" value="0" placeholder="0">
+                        </div>
+                        <button type="button" id="applyDiscountBtn" class="btn-apply-discount">
+                            <i class="fas fa-check"></i> Apply
+                        </button>
+                    </div>
+                    <div id="discountInfo" class="discount-info" style="display: none;">
+                        <i class="fas fa-info-circle"></i>
+                        <span id="discountInfoText"></span>
+                        <button type="button" id="clearDiscountBtn" class="btn-clear-discount">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="payment-section">
+                    <h3><i class="fas fa-credit-card"></i> Payment Method</h3>
+                    <div class="payment-methods">
+                        <label class="payment-option">
+                            <input type="radio" name="paymentMethod" value="cash" checked>
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Cash</span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="paymentMethod" value="card">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Credit/Debit Card</span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="paymentMethod" value="transfer">
+                            <i class="fas fa-exchange-alt"></i>
+                            <span>Bank Transfer</span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="paymentMethod" value="mixed">
+                            <i class="fas fa-layer-group"></i>
+                            <span>Mixed</span>
+                        </label>
+                    </div>
+                    
+                    <div id="paymentDetails" class="payment-details" style="display: none;">
+                        <div id="cardDetails" class="payment-detail-fields" style="display: none;">
+                            <div class="form-group">
+                                <label><i class="fas fa-credit-card"></i> Card Type</label>
+                                <select id="cardType" class="form-control">
+                                    <option value="visa">Visa</option>
+                                    <option value="mastercard">Mastercard</option>
+                                    <option value="amex">American Express</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-hashtag"></i> Last 4 Digits</label>
+                                <input type="text" id="cardLastDigits" class="form-control" maxlength="4" placeholder="1234">
+                            </div>
+                        </div>
+                        
+                        <div id="transferDetails" class="payment-detail-fields" style="display: none;">
+                            <div class="form-group">
+                                <label><i class="fas fa-university"></i> Bank</label>
+                                <input type="text" id="bankName" class="form-control" placeholder="Bank name">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-receipt"></i> Reference Number</label>
+                                <input type="text" id="transferReference" class="form-control" placeholder="Reference number">
+                            </div>
+                        </div>
+                        
+                        <div id="mixedDetails" class="payment-detail-fields" style="display: none;">
+                            <div class="form-group">
+                                <label><i class="fas fa-money-bill-wave"></i> Cash Amount</label>
+                                <input type="number" id="mixedCashAmount" class="form-control" min="0" step="0.01" value="0" placeholder="0.00">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-credit-card"></i> Card Amount</label>
+                                <input type="number" id="mixedCardAmount" class="form-control" min="0" step="0.01" value="0" placeholder="0.00">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-exchange-alt"></i> Transfer Amount</label>
+                                <input type="number" id="mixedTransferAmount" class="form-control" min="0" step="0.01" value="0" placeholder="0.00">
+                            </div>
+                            <div class="payment-summary-info" id="mixedSummary">
+                                <span>Total: $0.00</span>
+                                <span class="remaining-amount" id="mixedRemaining">Remaining: $0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
             <!-- Panel 3.5: Terms & Conditions -->
             <section class="sale-section terms-panel">
                 <h2 class="section-title"><i class="fas fa-file-contract"></i> Terms & Conditions</h2>
