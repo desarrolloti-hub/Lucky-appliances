@@ -27,7 +27,7 @@
 </head>
 <body>
     <!-- Navbar -->
-    <script src="/components/navbar-collaborator-component.js"></script>
+    <script src="/components/navbar-admin-component.js"></script>
     <script src="/components/theme-manager.js"></script>
 
     <div class="close-sale-container">
@@ -40,7 +40,7 @@
             <div class="sale-number" id="saleNumber">Loading...</div>
         </header>
 
-        <!-- Main Layout (Now in a single column) -->
+        <!-- Main Layout -->
         <div class="sale-layout">
 
             <!-- Panel 1: Products to sell -->
@@ -64,7 +64,6 @@
             <section class="sale-section customer-panel">
                 <h2 class="section-title"><i class="fas fa-user"></i> Customer & Seller Information</h2>
                 
-                <!-- Seller Information (Compact) -->
                 <div class="info-grid">
                     <div class="info-card" id="sellerInfo">
                         <h3><i class="fas fa-user-tie"></i> Seller</h3>
@@ -80,7 +79,6 @@
                     </div>
                 </div>
 
-                <!-- Customer Form -->
                 <div class="customer-form">
                     <div class="form-row">
                         <div class="form-group full-width">
@@ -112,12 +110,11 @@
                 <h2 class="section-title"><i class="fas fa-plus-circle"></i> Additional Charges & Tax</h2>
                 
                 <div class="charges-and-tax-container">
-                    <!-- Tax Section -->
                     <div class="tax-section">
-                        <h3><i class="fas fa-percent"></i> Tax (VAT)</h3>
+                        <h3><i class="fas fa-percent"></i> Tax (on discounted products)</h3>
                         <div class="tax-control">
                             <label for="taxRate">Tax Rate:</label>
-                            <input type="number" id="taxRate" class="form-control tax-input" min="0" max="100" step="0.1" value="16">
+                            <input type="number" id="taxRate" class="form-control tax-input" min="0" max="100" step="0.1" value="8.38" readonly>
                             <span>%</span>
                             <label class="tax-toggle">
                                 <input type="checkbox" id="applyTax" checked> Apply Tax
@@ -125,7 +122,6 @@
                         </div>
                     </div>
 
-                    <!-- Additional Charges Section -->
                     <div class="additional-charges-section">
                         <h3><i class="fas fa-receipt"></i> Additional Charges</h3>
                         <div id="additionalChargesContainer" class="additional-charges-container">
@@ -137,8 +133,58 @@
                     </div>
                 </div>
             </section>
-
-            <!-- Panel 3.5: Terms & Conditions -->
+            
+            <!-- Panel 4: Discount & Payment -->
+            <section class="sale-section discount-payment-panel">
+                <h2 class="section-title"><i class="fas fa-tag"></i> Discount & Payment</h2>
+                
+                <div class="discount-section">
+                    <h3><i class="fas fa-percent"></i> Discount (applied to products subtotal)</h3>
+                    <div class="discount-controls">
+                        <div class="form-group" style="flex: 1;">
+                            <label><i class="fas fa-dollar-sign"></i> Discount Amount ($)</label>
+                            <input type="number" id="discountAmount" class="form-control" min="0" step="0.01" value="0" placeholder="0.00">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label><i class="fas fa-percent"></i> Discount (%)</label>
+                            <input type="number" id="discountPercentage" class="form-control" min="0" max="100" step="0.1" value="0" placeholder="0">
+                        </div>
+                        <button type="button" id="applyDiscountBtn" class="btn-apply-discount">
+                            <i class="fas fa-check"></i> Apply
+                        </button>
+                    </div>
+                    <div id="discountInfo" class="discount-info" style="display: none;">
+                        <i class="fas fa-info-circle"></i>
+                        <span id="discountInfoText"></span>
+                        <button type="button" id="clearDiscountBtn" class="btn-clear-discount">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="payment-section">
+                    <h3><i class="fas fa-credit-card"></i> Payment Method</h3>
+                    <div class="payment-methods">
+                        <label class="payment-option">
+                            <input type="radio" name="paymentMethod" value="cash" checked>
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Cash</span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="paymentMethod" value="card">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Credit/Debit Card</span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="paymentMethod" value="transfer">
+                            <i class="fas fa-exchange-alt"></i>
+                            <span>Bank Transfer</span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Panel 5: Terms & Conditions -->
             <section class="sale-section terms-panel">
                 <h2 class="section-title"><i class="fas fa-file-contract"></i> Terms & Conditions</h2>
                 
@@ -155,14 +201,14 @@
                     
                     <div class="terms-editor">
                         <textarea id="termsText" class="terms-textarea" rows="12">
-            1. All items are covered by a 90 day warranty and there are new or open box.
-            2. Our warranty does not cover any damage caused during self-installation.
-            3. If the customer hired a technician that is not affiliated with Lucky Appliances, we are not responsible for damages caused during installation.
-            4. Our Warranty does not cover any damage that occurs during transportation by someone other than our technicians. For example if the customer decides to transport items in their own vehicle.
-            5. Lucky Appliances will only issue an exchange or return if there is a technical issue with the item or was dented/scratched by our technician.
-            6. After 3 months of keeping items on hold we are not responsible for damages.
-            7. Restocking fee applies for any returning item, often when the return is for reasons other than product defect or damages.
-            8. All sales are final.
+1. All items are covered by a 90 day warranty and there are new or open box.
+2. Our warranty does not cover any damage caused during self-installation.
+3. If the customer hired a technician that is not affiliated with Lucky Appliances, we are not responsible for damages caused during installation.
+4. Our Warranty does not cover any damage that occurs during transportation by someone other than our technicians. For example if the customer decides to transport items in their own vehicle.
+5. Lucky Appliances will only issue an exchange or return if there is a technical issue with the item or was dented/scratched by our technician.
+6. After 3 months of keeping items on hold we are not responsible for damages.
+7. Restocking fee applies for any returning item, often when the return is for reasons other than product defect or damages.
+8. All sales are final.
                         </textarea>
                     </div>
                     
@@ -173,25 +219,22 @@
                 </div>
             </section>
 
-            <!-- Panel 4: Summary & Actions -->
+            <!-- Panel 6: Summary & Actions -->
             <section class="sale-section summary-panel">
                 <h2 class="section-title"><i class="fas fa-calculator"></i> Summary & Actions</h2>
                 
-                <!-- Sale Summary -->
                 <div class="sale-summary">
                     <div class="summary-row">
                         <span>Products Subtotal:</span>
                         <span id="summaryProductsSubtotal">$0.00</span>
                     </div>
-                    <div id="chargesSummaryContainer">
-                        <!-- Dynamic charges will be added here via JS -->
-                    </div>
+                    <div id="chargesSummaryContainer"></div>
                     <div class="summary-row subtotal">
-                        <span>Subtotal:</span>
+                        <span>Subtotal (products after discount + charges):</span>
                         <span id="summarySubtotal">$0.00</span>
                     </div>
                     <div class="summary-row tax-row" id="taxRow">
-                        <span>VAT (<span id="taxRateDisplay">16</span>%):</span>
+                        <span>TAX (<span id="taxRateDisplay">8.38</span>% on discounted products):</span>
                         <span id="summaryTax">$0.00</span>
                     </div>
                     <div class="summary-row total">
@@ -200,7 +243,6 @@
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
                 <button class="btn-back" id="backBtn">
                     <i class="fas fa-arrow-left"></i> Back to POS
                 </button>

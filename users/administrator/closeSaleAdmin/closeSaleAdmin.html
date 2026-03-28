@@ -40,7 +40,7 @@
             <div class="sale-number" id="saleNumber">Loading...</div>
         </header>
 
-        <!-- Main Layout (Now in a single column) -->
+        <!-- Main Layout -->
         <div class="sale-layout">
 
             <!-- Panel 1: Products to sell -->
@@ -64,7 +64,6 @@
             <section class="sale-section customer-panel">
                 <h2 class="section-title"><i class="fas fa-user"></i> Customer & Seller Information</h2>
                 
-                <!-- Seller Information (Compact) -->
                 <div class="info-grid">
                     <div class="info-card" id="sellerInfo">
                         <h3><i class="fas fa-user-tie"></i> Seller</h3>
@@ -80,7 +79,6 @@
                     </div>
                 </div>
 
-                <!-- Customer Form -->
                 <div class="customer-form">
                     <div class="form-row">
                         <div class="form-group full-width">
@@ -112,20 +110,18 @@
                 <h2 class="section-title"><i class="fas fa-plus-circle"></i> Additional Charges & Tax</h2>
                 
                 <div class="charges-and-tax-container">
-                    <!-- Tax Section -->
-                <div class="tax-section">
-                    <h3><i class="fas fa-percent"></i> Tax</h3>
-                    <div class="tax-control">
-                        <label for="taxRate">Tax Rate:</label>
-                        <input type="number" id="taxRate" class="form-control tax-input" min="0" max="100" step="0.1" value="8.38" readonly>
-                        <span>%</span>
-                        <label class="tax-toggle">
-                            <input type="checkbox" id="applyTax" checked> Apply Tax
-                        </label>
+                    <div class="tax-section">
+                        <h3><i class="fas fa-percent"></i> Tax (on discounted products)</h3>
+                        <div class="tax-control">
+                            <label for="taxRate">Tax Rate:</label>
+                            <input type="number" id="taxRate" class="form-control tax-input" min="0" max="100" step="0.1" value="8.38" readonly>
+                            <span>%</span>
+                            <label class="tax-toggle">
+                                <input type="checkbox" id="applyTax" checked> Apply Tax
+                            </label>
+                        </div>
                     </div>
-                </div>
 
-                    <!-- Additional Charges Section -->
                     <div class="additional-charges-section">
                         <h3><i class="fas fa-receipt"></i> Additional Charges</h3>
                         <div id="additionalChargesContainer" class="additional-charges-container">
@@ -137,12 +133,13 @@
                     </div>
                 </div>
             </section>
-            <!-- Panel 3.5: Discount & Payment -->
+            
+            <!-- Panel 4: Discount & Payment -->
             <section class="sale-section discount-payment-panel">
                 <h2 class="section-title"><i class="fas fa-tag"></i> Discount & Payment</h2>
                 
                 <div class="discount-section">
-                    <h3><i class="fas fa-percent"></i> Discount (applied to subtotal)</h3>
+                    <h3><i class="fas fa-percent"></i> Discount (applied to products subtotal)</h3>
                     <div class="discount-controls">
                         <div class="form-group" style="flex: 1;">
                             <label><i class="fas fa-dollar-sign"></i> Discount Amount ($)</label>
@@ -183,63 +180,11 @@
                             <i class="fas fa-exchange-alt"></i>
                             <span>Bank Transfer</span>
                         </label>
-                        <label class="payment-option">
-                            <input type="radio" name="paymentMethod" value="mixed">
-                            <i class="fas fa-layer-group"></i>
-                            <span>Mixed</span>
-                        </label>
-                    </div>
-                    
-                    <div id="paymentDetails" class="payment-details" style="display: none;">
-                        <div id="cardDetails" class="payment-detail-fields" style="display: none;">
-                            <div class="form-group">
-                                <label><i class="fas fa-credit-card"></i> Card Type</label>
-                                <select id="cardType" class="form-control">
-                                    <option value="visa">Visa</option>
-                                    <option value="mastercard">Mastercard</option>
-                                    <option value="amex">American Express</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label><i class="fas fa-hashtag"></i> Last 4 Digits</label>
-                                <input type="text" id="cardLastDigits" class="form-control" maxlength="4" placeholder="1234">
-                            </div>
-                        </div>
-                        
-                        <div id="transferDetails" class="payment-detail-fields" style="display: none;">
-                            <div class="form-group">
-                                <label><i class="fas fa-university"></i> Bank</label>
-                                <input type="text" id="bankName" class="form-control" placeholder="Bank name">
-                            </div>
-                            <div class="form-group">
-                                <label><i class="fas fa-receipt"></i> Reference Number</label>
-                                <input type="text" id="transferReference" class="form-control" placeholder="Reference number">
-                            </div>
-                        </div>
-                        
-                        <div id="mixedDetails" class="payment-detail-fields" style="display: none;">
-                            <div class="form-group">
-                                <label><i class="fas fa-money-bill-wave"></i> Cash Amount</label>
-                                <input type="number" id="mixedCashAmount" class="form-control" min="0" step="0.01" value="0" placeholder="0.00">
-                            </div>
-                            <div class="form-group">
-                                <label><i class="fas fa-credit-card"></i> Card Amount</label>
-                                <input type="number" id="mixedCardAmount" class="form-control" min="0" step="0.01" value="0" placeholder="0.00">
-                            </div>
-                            <div class="form-group">
-                                <label><i class="fas fa-exchange-alt"></i> Transfer Amount</label>
-                                <input type="number" id="mixedTransferAmount" class="form-control" min="0" step="0.01" value="0" placeholder="0.00">
-                            </div>
-                            <div class="payment-summary-info" id="mixedSummary">
-                                <span>Total: $0.00</span>
-                                <span class="remaining-amount" id="mixedRemaining">Remaining: $0.00</span>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </section>
-            <!-- Panel 3.5: Terms & Conditions -->
+            
+            <!-- Panel 5: Terms & Conditions -->
             <section class="sale-section terms-panel">
                 <h2 class="section-title"><i class="fas fa-file-contract"></i> Terms & Conditions</h2>
                 
@@ -256,14 +201,14 @@
                     
                     <div class="terms-editor">
                         <textarea id="termsText" class="terms-textarea" rows="12">
-            1. All items are covered by a 90 day warranty and there are new or open box.
-            2. Our warranty does not cover any damage caused during self-installation.
-            3. If the customer hired a technician that is not affiliated with Lucky Appliances, we are not responsible for damages caused during installation.
-            4. Our Warranty does not cover any damage that occurs during transportation by someone other than our technicians. For example if the customer decides to transport items in their own vehicle.
-            5. Lucky Appliances will only issue an exchange or return if there is a technical issue with the item or was dented/scratched by our technician.
-            6. After 3 months of keeping items on hold we are not responsible for damages.
-            7. Restocking fee applies for any returning item, often when the return is for reasons other than product defect or damages.
-            8. All sales are final.
+1. All items are covered by a 90 day warranty and there are new or open box.
+2. Our warranty does not cover any damage caused during self-installation.
+3. If the customer hired a technician that is not affiliated with Lucky Appliances, we are not responsible for damages caused during installation.
+4. Our Warranty does not cover any damage that occurs during transportation by someone other than our technicians. For example if the customer decides to transport items in their own vehicle.
+5. Lucky Appliances will only issue an exchange or return if there is a technical issue with the item or was dented/scratched by our technician.
+6. After 3 months of keeping items on hold we are not responsible for damages.
+7. Restocking fee applies for any returning item, often when the return is for reasons other than product defect or damages.
+8. All sales are final.
                         </textarea>
                     </div>
                     
@@ -274,25 +219,22 @@
                 </div>
             </section>
 
-            <!-- Panel 4: Summary & Actions -->
+            <!-- Panel 6: Summary & Actions -->
             <section class="sale-section summary-panel">
                 <h2 class="section-title"><i class="fas fa-calculator"></i> Summary & Actions</h2>
                 
-                <!-- Sale Summary -->
                 <div class="sale-summary">
                     <div class="summary-row">
                         <span>Products Subtotal:</span>
                         <span id="summaryProductsSubtotal">$0.00</span>
                     </div>
-                    <div id="chargesSummaryContainer">
-                        <!-- Dynamic charges will be added here via JS -->
-                    </div>
+                    <div id="chargesSummaryContainer"></div>
                     <div class="summary-row subtotal">
-                        <span>Subtotal:</span>
+                        <span>Subtotal (products after discount + charges):</span>
                         <span id="summarySubtotal">$0.00</span>
                     </div>
                     <div class="summary-row tax-row" id="taxRow">
-                        <span>TAX (<span id="taxRateDisplay">8.38</span>%):</span>
+                        <span>TAX (<span id="taxRateDisplay">8.38</span>% on discounted products):</span>
                         <span id="summaryTax">$0.00</span>
                     </div>
                     <div class="summary-row total">
@@ -301,7 +243,6 @@
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
                 <button class="btn-back" id="backBtn">
                     <i class="fas fa-arrow-left"></i> Back to POS
                 </button>

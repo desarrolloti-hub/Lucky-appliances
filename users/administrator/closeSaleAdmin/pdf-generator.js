@@ -2,6 +2,7 @@ class PDFGenerator {
 
     constructor() {
         this.doc = null
+        this.saleNumber = null
     }
 
     async generateSalePDF(saleData, products) {
@@ -13,6 +14,12 @@ class PDFGenerator {
             format: "letter"
         })
 
+        // Guardar número de venta para usarlo en el footer
+        this.saleNumber = saleData.saleNumber
+
+        // Usar el evento didDrawPage para agregar header y footer en cada página
+        this.doc.autoTable = this.doc.autoTable || function() {}
+        
         await this.addHeader(saleData)
         this.addCustomerInfo(saleData)
         this.addProductsTable(products)
@@ -28,17 +35,18 @@ class PDFGenerator {
             this.addTermsAndConditions(saleData.terms)
         }
 
+        // Agregar footer en todas las páginas
         this.addFooter()
 
         return this.doc.output("blob")
     }
     
     async addHeader(saleData) {
-        // Logo a la derecha - más pequeño y arriba
+        // Logo a la derecha
         try {
             const logoPath = '/assets/icons/luckyPDF2.png'
             const logoImage = await this.loadImage(logoPath)
-            this.doc.addImage(logoImage, 'PNG', 140, 3, 65, 65)
+            this.doc.addImage(logoImage, 'PNG', 140, 3, 55, 55)
         } catch (error) {
             console.error('Error loading logo:', error)
             this.doc.setFont("helvetica", "bold")
@@ -47,7 +55,7 @@ class PDFGenerator {
             this.doc.text("LUCKY APPLIANCES", 160, 20)
         }
 
-        // Información de la empresa - más compacta
+        // Información de la empresa - color azul
         this.doc.setFont("helvetica", "bold")
         this.doc.setFontSize(9)
         this.doc.setTextColor(10, 37, 64)
@@ -61,7 +69,7 @@ class PDFGenerator {
         this.doc.text("SUIT 6", 20, 34)
         this.doc.text("PHONE: 725 300 1480", 20, 39)
 
-        // Título centrado
+        // Título centrado - color azul
         this.doc.setFont("helvetica", "bold")
         this.doc.setFontSize(16)
         this.doc.setTextColor(10, 37, 64)
@@ -76,12 +84,11 @@ class PDFGenerator {
         const invoiceInfo = `${saleData.saleNumber}     DATE: ${date}`
         this.doc.text(invoiceInfo, 105, 63, { align: "center" })
 
-        // Línea separadora - más delgada y más arriba
+        // Línea separadora
         this.doc.setDrawColor(200, 200, 200)
         this.doc.setLineWidth(0.3)
         this.doc.line(20, 70, 190, 70)
         
-        // Guardar posición Y después del header
         this.doc.headerEndY = 72
     }
 
@@ -96,16 +103,13 @@ class PDFGenerator {
     }
     
     addCustomerInfo(saleData) {
-        // Start Y después del header (reducido)
         let startY = this.doc.headerEndY + 2
         
-        // Título "CUSTOMER:" en azul sin línea
         this.doc.setFont("helvetica", "bold")
         this.doc.setFontSize(9)
         this.doc.setTextColor(10, 37, 64)
         this.doc.text("CUSTOMER:", 20, startY)
         
-        // Información del cliente - con etiquetas individuales en formato continuo
         this.doc.setFont("helvetica", "normal")
         this.doc.setFontSize(8)
         this.doc.setTextColor(0, 0, 0)
@@ -115,21 +119,16 @@ class PDFGenerator {
         const customerEmail = saleData.customer.email || "N/A"
         const customerAddress = saleData.customer.address || "N/A"
         
-        // Construir el texto con etiquetas
         const customerInfo = `Name: ${customerName} | Phone: ${customerPhone} | Email: ${customerEmail} | Address: ${customerAddress}`
-        
-        // Split text to fit width
         const customerLines = this.doc.splitTextToSize(customerInfo, 165)
         
         this.doc.text(customerLines, 20, startY + 5)
         
-        // Store Y position for next element
         const customerLinesCount = customerLines.length
         this.doc.lastCustomerInfoY = startY + 5 + (customerLinesCount * 4) + 3
     }
 
     addProductsTable(products) {
-        // Columnas: S/N, DESCRIPTION, MODEL, PRICE (sin SKU)
         const columns = [
             "S/N",
             "DESCRIPTION",
@@ -140,7 +139,6 @@ class PDFGenerator {
         const rows = []
 
         products.forEach(product => {
-            // Obtener la descripción de manera más inteligente
             let description = "N/A"
             if (product.description && product.description !== "N/A") {
                 description = product.description
@@ -160,7 +158,6 @@ class PDFGenerator {
             ])
         })
 
-        // Start Y position después de customer info (reduced margin)
         const startY = (this.doc.lastCustomerInfoY || 78) + 2
 
         this.doc.autoTable({
@@ -177,21 +174,21 @@ class PDFGenerator {
                 halign: 'center'
             },
             headStyles: {
-                fillColor: [247, 215, 66],
-                textColor: [0, 0, 0],
+                fillColor: [10, 37, 64], // Azul oscuro (#0a2540)
+                textColor: [255, 255, 255],
                 fontStyle: "bold",
                 halign: "center",
                 fontSize: 7,
                 cellPadding: 3
             },
             columnStyles: {
-                0: { cellWidth: 32, halign: 'center' }, // S/N
-                1: { cellWidth: 85, halign: 'left' },   // DESCRIPTION - más ancho (antes 58)
-                2: { cellWidth: 38, halign: 'left' },   // MODEL
-                3: { cellWidth: 28, halign: 'right' }   // PRICE
+                0: { cellWidth: 32, halign: 'center' },
+                1: { cellWidth: 85, halign: 'left' },
+                2: { cellWidth: 38, halign: 'left' },
+                3: { cellWidth: 28, halign: 'right' }
             },
             margin: { left: 20, right: 20 },
-            tableWidth: 170, // Centrar la tabla
+            tableWidth: 170,
             didDrawPage: (data) => {
                 this.doc.lastProductsTableY = data.cursor.y
             }
@@ -199,15 +196,13 @@ class PDFGenerator {
     }
     
     addAdditionalCharges(charges) {
-        const finalY = this.doc.lastProductsTableY + 3 // Reduced margin
+        const finalY = this.doc.lastProductsTableY + 3
         
-        // Título
         this.doc.setFont("helvetica", "bold")
         this.doc.setFontSize(8)
         this.doc.setTextColor(10, 37, 64)
         this.doc.text("ADDITIONAL CHARGES", 20, finalY)
 
-        // Crear tabla para cargos adicionales
         const chargesColumns = ["DESCRIPTION", "AMOUNT"]
         const chargesRows = charges.map(charge => [
             charge.description,
@@ -226,8 +221,8 @@ class PDFGenerator {
                 lineWidth: 0.1
             },
             headStyles: {
-                fillColor: [247, 215, 66],
-                textColor: [0, 0, 0],
+                fillColor: [10, 37, 64], // Azul oscuro (#0a2540)
+                textColor: [255, 255, 255],
                 fontStyle: "bold",
                 fontSize: 7
             },
@@ -247,14 +242,14 @@ class PDFGenerator {
         let startY
 
         if (this.doc.lastAdditionalChargesY) {
-            startY = this.doc.lastAdditionalChargesY + 3 // Reduced margin
+            startY = this.doc.lastAdditionalChargesY + 3
         } else {
-            startY = this.doc.lastProductsTableY + 3 // Reduced margin
+            startY = this.doc.lastProductsTableY + 3
         }
-        // Usar la misma posición X que la columna de precios de productos
+        
         const totalsX = 190
         const labelsX = 140
-        const lineHeight = 5 // Reduced line height
+        const lineHeight = 5
 
         this.doc.setFont("helvetica", "bold")
         this.doc.setFontSize(9)
@@ -267,7 +262,59 @@ class PDFGenerator {
 
         let currentY = startY + lineHeight
 
-        // Subtotal
+        // Products Subtotal
+        this.doc.text("Products Subtotal:", labelsX, currentY)
+        this.doc.text(
+            `$${saleData.amounts.productsSubtotal.toFixed(2)}`,
+            totalsX,
+            currentY,
+            { align: "right" }
+        )
+        currentY += lineHeight
+
+        // Discount if applied
+        if (saleData.amounts.discountValue > 0) {
+            this.doc.setTextColor(76, 175, 80)
+            this.doc.text("Discount:", labelsX, currentY)
+            this.doc.text(
+                `-$${saleData.amounts.discountValue.toFixed(2)}`,
+                totalsX,
+                currentY,
+                { align: "right" }
+            )
+            currentY += lineHeight
+            
+            // Products after discount
+            const discountedProducts = saleData.amounts.productsSubtotal - saleData.amounts.discountValue
+            this.doc.setTextColor(10, 37, 64)
+            this.doc.text("Products after discount:", labelsX, currentY)
+            this.doc.text(
+                `$${discountedProducts.toFixed(2)}`,
+                totalsX,
+                currentY,
+                { align: "right" }
+            )
+            currentY += lineHeight
+        }
+
+        // Additional Charges
+        if (saleData.additionalCharges && saleData.additionalCharges.length > 0) {
+            this.doc.setTextColor(0, 0, 0)
+            saleData.additionalCharges.forEach(charge => {
+                this.doc.text(charge.description + ":", labelsX, currentY)
+                this.doc.text(
+                    `$${charge.amount.toFixed(2)}`,
+                    totalsX,
+                    currentY,
+                    { align: "right" }
+                )
+                currentY += lineHeight
+            })
+        }
+
+        // Subtotal (products after discount + charges)
+        this.doc.setTextColor(0, 0, 0)
+        this.doc.setFont("helvetica", "bold")
         this.doc.text("Subtotal:", labelsX, currentY)
         this.doc.text(
             `$${saleData.amounts.subtotal.toFixed(2)}`,
@@ -275,11 +322,12 @@ class PDFGenerator {
             currentY,
             { align: "right" }
         )
+        this.doc.setFont("helvetica", "normal")
         currentY += lineHeight
 
-        // Tax if applicable - ALWAYS 5.8% when applied
+        // Tax - with correct rate (8.38%)
         if (saleData.amounts.taxRate > 0) {
-            this.doc.text(`TAX (5.8%):`, labelsX, currentY)
+            this.doc.text(`TAX (8.38%):`, labelsX, currentY)
             this.doc.text(
                 `$${saleData.amounts.tax.toFixed(2)}`,
                 totalsX,
@@ -289,7 +337,7 @@ class PDFGenerator {
             currentY += lineHeight
         }
 
-        // Línea separadora más delgada
+        // Separator line
         this.doc.setDrawColor(200, 200, 200)
         this.doc.setLineWidth(0.2)
         this.doc.line(labelsX, currentY - 1.5, totalsX, currentY - 1.5)
@@ -313,46 +361,46 @@ class PDFGenerator {
         let startY;
         
         if (this.doc.lastTotalsY) {
-            startY = this.doc.lastTotalsY + 5; // Reduced margin
+            startY = this.doc.lastTotalsY + 5
         } else {
-            startY = this.doc.lastProductsTableY ? this.doc.lastProductsTableY + 10 : 180;
+            startY = this.doc.lastProductsTableY ? this.doc.lastProductsTableY + 10 : 180
         }
         
-        const pageHeight = this.doc.internal.pageSize.height;
+        const pageHeight = this.doc.internal.pageSize.height
         if (startY > pageHeight - 35) {
-            this.doc.addPage();
-            startY = 15;
+            this.doc.addPage()
+            startY = 15
         }
         
-        this.doc.setFont("helvetica", "bold");
-        this.doc.setFontSize(8);
-        this.doc.setTextColor(10, 37, 64);
-        this.doc.text("TERMS AND CONDITIONS", 20, startY);
+        this.doc.setFont("helvetica", "bold")
+        this.doc.setFontSize(8)
+        this.doc.setTextColor(10, 37, 64)
+        this.doc.text("TERMS AND CONDITIONS", 20, startY)
         
-        this.doc.setDrawColor(200, 200, 200);
-        this.doc.setLineWidth(0.2);
-        this.doc.line(20, startY + 1.5, 65, startY + 1.5);
+        this.doc.setDrawColor(200, 200, 200)
+        this.doc.setLineWidth(0.2)
+        this.doc.line(20, startY + 1.5, 65, startY + 1.5)
         
-        this.doc.setFont("helvetica", "normal");
-        this.doc.setFontSize(6.5);
-        this.doc.setTextColor(80, 80, 80);
+        this.doc.setFont("helvetica", "normal")
+        this.doc.setFontSize(6.5)
+        this.doc.setTextColor(80, 80, 80)
         
-        const termsLines = this.doc.splitTextToSize(terms, 170);
+        const termsLines = this.doc.splitTextToSize(terms, 170)
         
-        let yPosition = startY + 5;
-        const lineHeight = 3.2; // Reduced line height
+        let yPosition = startY + 5
+        const lineHeight = 3.2
         
         for (let i = 0; i < termsLines.length; i++) {
             if (yPosition > pageHeight - 12) {
-                this.doc.addPage();
-                yPosition = 15;
+                this.doc.addPage()
+                yPosition = 15
             }
             
-            this.doc.text(termsLines[i], 20, yPosition);
-            yPosition += lineHeight;
+            this.doc.text(termsLines[i], 20, yPosition)
+            yPosition += lineHeight
         }
         
-        this.doc.lastTermsY = yPosition;
+        this.doc.lastTermsY = yPosition
     }
     
     addFooter() {
@@ -367,6 +415,7 @@ class PDFGenerator {
             this.doc.setFont("helvetica", "italic")
             this.doc.setTextColor(150, 150, 150)
 
+            // Mensaje de agradecimiento centrado
             this.doc.text(
                 "Thank you for your purchase",
                 105,
@@ -374,12 +423,25 @@ class PDFGenerator {
                 { align: "center" }
             )
 
+            // Número de página a la derecha
             this.doc.text(
                 `Page ${i} of ${pages}`,
                 190,
                 pageHeight - 6,
                 { align: "right" }
             )
+
+            // Número de venta a la izquierda en el footer
+            if (this.saleNumber) {
+                this.doc.setFont("helvetica", "normal")
+                this.doc.setTextColor(100, 100, 100)
+                this.doc.text(
+                    `Sale #: ${this.saleNumber}`,
+                    20,
+                    pageHeight - 6,
+                    { align: "left" }
+                )
+            }
         }
     }
 

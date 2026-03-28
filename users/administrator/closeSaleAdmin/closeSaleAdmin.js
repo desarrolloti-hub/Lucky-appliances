@@ -26,12 +26,11 @@ let currentDiscount = {
 
 // Payment state
 let selectedPaymentMethod = 'cash';
-let paymentDetailsData = {};
 
 // Variables para autocompletado de clientes
 let clientSearchTimeout = null;
-let currentSuggestedClient = null; // Cliente sugerido
-let isClientSelected = false; // Si el usuario aceptó la sugerencia
+let currentSuggestedClient = null;
+let isClientSelected = false;
 
 // DOM Elements
 const productsGrid = document.getElementById('productsGrid');
@@ -51,7 +50,6 @@ const summarySubtotal = document.getElementById('summarySubtotal');
 const summaryTax = document.getElementById('summaryTax');
 const summaryTotal = document.getElementById('summaryTotal');
 const taxRateDisplay = document.getElementById('taxRateDisplay');
-const chargesSummaryContainer = document.getElementById('chargesSummaryContainer');
 const additionalChargesContainer = document.getElementById('additionalChargesContainer');
 const addChargeBtn = document.getElementById('addChargeBtn');
 const completeSaleBtn = document.getElementById('completeSaleBtn');
@@ -80,17 +78,6 @@ const clearDiscountBtn = document.getElementById('clearDiscountBtn');
 // Payment Elements
 const paymentRadios = document.querySelectorAll('input[name="paymentMethod"]');
 const paymentDetails = document.getElementById('paymentDetails');
-const cardDetails = document.getElementById('cardDetails');
-const transferDetails = document.getElementById('transferDetails');
-const mixedDetails = document.getElementById('mixedDetails');
-const cardType = document.getElementById('cardType');
-const cardLastDigits = document.getElementById('cardLastDigits');
-const bankName = document.getElementById('bankName');
-const transferReference = document.getElementById('transferReference');
-const mixedCashAmount = document.getElementById('mixedCashAmount');
-const mixedCardAmount = document.getElementById('mixedCardAmount');
-const mixedTransferAmount = document.getElementById('mixedTransferAmount');
-const mixedSummary = document.getElementById('mixedSummary');
 
 // Default terms
 const DEFAULT_TERMS = `1. All items are covered by a 90 day warranty and there are new or open box.
@@ -146,7 +133,6 @@ async function loadProducts() {
         await productManager.loadBrandsAndCategoriesAndProviders();
         allProducts = await productManager.loadProducts();
         
-        // Filter products that match serial numbers
         products = [];
         allProducts.forEach(product => {
             if (product.unidades && Array.isArray(product.unidades)) {
@@ -254,39 +240,45 @@ function calculateChargesTotal() {
 
 function calculateDiscount() {
     const productsSubtotal = calculateProductsSubtotal();
-    const chargesTotal = calculateChargesTotal();
-    const subtotalBeforeDiscount = productsSubtotal + chargesTotal;
     
     let discountValue = 0;
     
     if (currentDiscount.type === 'amount') {
-        discountValue = Math.min(currentDiscount.amount, subtotalBeforeDiscount);
+        discountValue = Math.min(currentDiscount.amount, productsSubtotal);
         currentDiscount.amount = discountValue;
-        currentDiscount.percentage = subtotalBeforeDiscount > 0 ? (discountValue / subtotalBeforeDiscount) * 100 : 0;
+        currentDiscount.percentage = productsSubtotal > 0 ? (discountValue / productsSubtotal) * 100 : 0;
     } else if (currentDiscount.type === 'percentage') {
-        discountValue = subtotalBeforeDiscount * (currentDiscount.percentage / 100);
+        discountValue = productsSubtotal * (currentDiscount.percentage / 100);
         currentDiscount.amount = discountValue;
     } else {
         currentDiscount.amount = 0;
         currentDiscount.percentage = 0;
     }
     
-    return { discountValue, subtotalBeforeDiscount };
+    return { discountValue, productsSubtotal };
 }
 
 function calculateTotals() {
     const productsSubtotal = calculateProductsSubtotal();
     const chargesTotal = calculateChargesTotal();
-    const subtotalBeforeDiscount = productsSubtotal + chargesTotal;
     const { discountValue } = calculateDiscount();
-    const subtotal = subtotalBeforeDiscount - discountValue;
     
+    // Paso 1: Aplicar descuento al subtotal de productos
+    const discountedProductsSubtotal = productsSubtotal - discountValue;
+    
+    // Paso 2: Subtotal = productos con descuento + cargos adicionales
+    const subtotal = discountedProductsSubtotal + chargesTotal;
+    
+    // Paso 3: Impuesto calculado sobre el subtotal de productos con descuento (NO sobre cargos adicionales)
     const taxRate = applyTaxCheckbox.checked ? 0.0838 : 0;
-    const tax = subtotal * taxRate;
+    const tax = discountedProductsSubtotal * taxRate;
+    
+    // Paso 4: Total final
     const total = subtotal + tax;
     
     return { 
         productsSubtotal, 
+        discountedProductsSubtotal,
         chargesTotal, 
         subtotal, 
         tax, 
@@ -373,39 +365,7 @@ function handlePaymentMethodChange() {
     if (!selected) return;
     
     selectedPaymentMethod = selected;
-    paymentDetails.style.display = 'block';
-    
-    // Ocultar todos los detalles
-    if (cardDetails) cardDetails.style.display = 'none';
-    if (transferDetails) transferDetails.style.display = 'none';
-    if (mixedDetails) mixedDetails.style.display = 'none';
-    
-    // Mostrar el correspondiente
-    if (selected === 'card') {
-        if (cardDetails) cardDetails.style.display = 'grid';
-    } else if (selected === 'transfer') {
-        if (transferDetails) transferDetails.style.display = 'grid';
-    } else if (selected === 'mixed') {
-        if (mixedDetails) mixedDetails.style.display = 'grid';
-        updateMixedPaymentSummary(calculateTotals().total);
-    }
-}
-
-function updateMixedPaymentSummary(totalAmount) {
-    if (!mixedSummary) return;
-    
-    const cashAmt = parseFloat(mixedCashAmount?.value) || 0;
-    const cardAmt = parseFloat(mixedCardAmount?.value) || 0;
-    const transferAmt = parseFloat(mixedTransferAmount?.value) || 0;
-    const totalPaid = cashAmt + cardAmt + transferAmt;
-    const remaining = totalAmount - totalPaid;
-    
-    mixedSummary.innerHTML = `
-        <span>Total Paid: ${formatCurrency(totalPaid)}</span>
-        <span class="${remaining > 0 ? 'remaining-amount' : ''}">
-            ${remaining > 0 ? `Remaining: ${formatCurrency(remaining)}` : '✓ Fully Paid'}
-        </span>
-    `;
+    paymentDetails.style.display = 'none';
 }
 
 function getPaymentData() {
@@ -413,33 +373,17 @@ function getPaymentData() {
     const paymentDetailsData = {};
     
     if (paymentMethod === 'card') {
-        paymentDetailsData.cardType = cardType?.value || '';
-        paymentDetailsData.lastDigits = cardLastDigits?.value || '';
+        paymentDetailsData.type = 'card';
     } else if (paymentMethod === 'transfer') {
-        paymentDetailsData.bank = bankName?.value || '';
-        paymentDetailsData.reference = transferReference?.value || '';
-    } else if (paymentMethod === 'mixed') {
-        paymentDetailsData.cashAmount = parseFloat(mixedCashAmount?.value) || 0;
-        paymentDetailsData.cardAmount = parseFloat(mixedCardAmount?.value) || 0;
-        paymentDetailsData.transferAmount = parseFloat(mixedTransferAmount?.value) || 0;
+        paymentDetailsData.type = 'transfer';
+    } else {
+        paymentDetailsData.type = 'cash';
     }
     
     return { paymentMethod, paymentDetails: paymentDetailsData };
 }
 
 function validatePayment() {
-    const totals = calculateTotals();
-    const paymentData = getPaymentData();
-    
-    if (paymentData.paymentMethod === 'mixed') {
-        const totalPaid = paymentData.paymentDetails.cashAmount + 
-                         paymentData.paymentDetails.cardAmount + 
-                         paymentData.paymentDetails.transferAmount;
-        if (totalPaid < totals.total) {
-            return { valid: false, message: `Insufficient payment: ${formatCurrency(totals.total - totalPaid)} remaining` };
-        }
-    }
-    
     return { valid: true };
 }
 
@@ -730,10 +674,67 @@ function addNewCharge() {
 function updateSummary() {
     const totals = calculateTotals();
     
+    // Actualizar productos subtotal
     summaryProductsSubtotal.textContent = formatCurrency(totals.productsSubtotal);
     
+    // Mostrar descuento aplicado
+    let discountRow = document.querySelector('.summary-row.discount-row');
+    if (totals.discountValue > 0) {
+        if (!discountRow) {
+            discountRow = document.createElement('div');
+            discountRow.className = 'summary-row discount-row';
+            const summaryRows = document.querySelector('.sale-summary');
+            if (summaryRows) {
+                const productsRow = document.querySelector('.summary-row:first-child');
+                if (productsRow) {
+                    productsRow.insertAdjacentElement('afterend', discountRow);
+                }
+            }
+        }
+        discountRow.innerHTML = `
+            <span><i class="fas fa-tag"></i> Discount (on products):</span>
+            <span>-${formatCurrency(totals.discountValue)}</span>
+        `;
+    } else if (discountRow) {
+        discountRow.remove();
+    }
+    
+    // Mostrar productos con descuento
+    let discountedProductsRow = document.querySelector('.summary-row.discounted-products');
+    if (totals.discountedProductsSubtotal !== totals.productsSubtotal) {
+        if (!discountedProductsRow) {
+            discountedProductsRow = document.createElement('div');
+            discountedProductsRow.className = 'summary-row discounted-products';
+            discountedProductsRow.style.fontSize = '0.9rem';
+            discountedProductsRow.style.color = 'var(--accent)';
+            const productsRow = document.querySelector('.summary-row:first-child');
+            if (productsRow && discountRow) {
+                discountRow.insertAdjacentElement('afterend', discountedProductsRow);
+            } else if (productsRow) {
+                productsRow.insertAdjacentElement('afterend', discountedProductsRow);
+            }
+        }
+        discountedProductsRow.innerHTML = `
+            <span>Products after discount:</span>
+            <span>${formatCurrency(totals.discountedProductsSubtotal)}</span>
+        `;
+    } else if (discountedProductsRow) {
+        discountedProductsRow.remove();
+    }
+    
+    // Mostrar cargos adicionales
+    let chargesContainer = document.getElementById('chargesSummaryContainer');
+    if (!chargesContainer) {
+        chargesContainer = document.createElement('div');
+        chargesContainer.id = 'chargesSummaryContainer';
+        const afterProducts = discountedProductsRow || discountRow || document.querySelector('.summary-row:first-child');
+        if (afterProducts) {
+            afterProducts.insertAdjacentElement('afterend', chargesContainer);
+        }
+    }
+    
     if (additionalCharges.length > 0) {
-        chargesSummaryContainer.style.display = 'block';
+        chargesContainer.style.display = 'block';
         let chargesHTML = '';
         additionalCharges.forEach((charge, index) => {
             chargesHTML += `
@@ -743,43 +744,20 @@ function updateSummary() {
                 </div>
             `;
         });
-        chargesSummaryContainer.innerHTML = chargesHTML;
+        chargesContainer.innerHTML = chargesHTML;
     } else {
-        chargesSummaryContainer.style.display = 'none';
-        chargesSummaryContainer.innerHTML = '';
+        chargesContainer.style.display = 'none';
+        chargesContainer.innerHTML = '';
     }
     
-    let discountRow = document.querySelector('.summary-row.discount-row');
-    if (totals.discountValue > 0) {
-        if (!discountRow) {
-            discountRow = document.createElement('div');
-            discountRow.className = 'summary-row discount-row';
-            const summaryRows = document.querySelector('.sale-summary');
-            if (summaryRows) {
-                const chargesContainer = document.getElementById('chargesSummaryContainer');
-                if (chargesContainer) {
-                    chargesContainer.insertAdjacentElement('afterend', discountRow);
-                }
-            }
-        }
-        discountRow.innerHTML = `
-            <span><i class="fas fa-tag"></i> Discount:</span>
-            <span>-${formatCurrency(totals.discountValue)}</span>
-        `;
-    } else if (discountRow) {
-        discountRow.remove();
-    }
-    
+    // Actualizar impuestos
     taxRateDisplay.textContent = applyTaxCheckbox.checked ? '8.38' : '0';
     taxRow.style.display = applyTaxCheckbox.checked ? 'flex' : 'none';
     
+    // Actualizar subtotal, tax y total
     summarySubtotal.textContent = formatCurrency(totals.subtotal);
     summaryTax.textContent = formatCurrency(totals.tax);
     summaryTotal.textContent = formatCurrency(totals.total);
-    
-    if (selectedPaymentMethod === 'mixed') {
-        updateMixedPaymentSummary(totals.total);
-    }
     
     validateForm();
 }
@@ -1022,7 +1000,7 @@ async function completeSale() {
         const totals = calculateTotals();
         const paymentData = getPaymentData();
         
-        // Validate payment for mixed method
+        // Validate payment (always valid since we don't process payments)
         const paymentValidation = validatePayment();
         if (!paymentValidation.valid) {
             showTemporaryMessage(paymentValidation.message, 'warning');
@@ -1084,6 +1062,7 @@ async function completeSale() {
                 role: userData.role || ''
             },
             productsSubtotal: totals.productsSubtotal,
+            discountedProductsSubtotal: totals.discountedProductsSubtotal,
             additionalChargesTotal: totals.chargesTotal,
             discountValue: totals.discountValue,
             subtotal: totals.subtotal,
@@ -1119,6 +1098,7 @@ async function completeSale() {
             },
             amounts: {
                 productsSubtotal: totals.productsSubtotal,
+                discountedProductsSubtotal: totals.discountedProductsSubtotal,
                 chargesTotal: totals.chargesTotal,
                 subtotal: totals.subtotal,
                 tax: totals.tax,
@@ -1316,11 +1296,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     paymentRadios.forEach(radio => {
         radio.addEventListener('change', handlePaymentMethodChange);
     });
-    
-    // Mixed payment listeners
-    if (mixedCashAmount) mixedCashAmount.addEventListener('input', () => updateMixedPaymentSummary(calculateTotals().total));
-    if (mixedCardAmount) mixedCardAmount.addEventListener('input', () => updateMixedPaymentSummary(calculateTotals().total));
-    if (mixedTransferAmount) mixedTransferAmount.addEventListener('input', () => updateMixedPaymentSummary(calculateTotals().total));
     
     // Tax listener
     if (applyTaxCheckbox) {
