@@ -27,7 +27,7 @@
         height: '200px',                        // Altura del carrusel
         maxBrands: 20,                          // Máximo número de marcas a mostrar
         showEmptyState: true,                   // Mostrar estado vacío
-        brandDetailUrl: '/visitors/products/products.html' // URL base para detalles
+        brandDetailUrl: '/users/visitors/products/products.html' // URL base para detalles
     };
     
     // =============================================

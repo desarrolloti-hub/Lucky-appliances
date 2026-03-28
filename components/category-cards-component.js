@@ -184,7 +184,7 @@
             
             const card = document.createElement('a');
             card.className = 'category-card';
-            card.href = `/visitors/products/products.html?category=${category.id}`;
+            card.href = `/users/visitors/products/products.html?category=${category.id}`;
             card.dataset.index = index;
             card.dataset.categoryId = category.id;
             card.style.animationDelay = `${index * this.config.animationDelay}ms`;
@@ -218,7 +218,7 @@
             buttonContainer.className = 'categories-view-all';
             
             buttonContainer.innerHTML = `
-                <a href="/visitors/products/products.html" class="btn-view-all">
+                <a href="/users/visitors/products/products.html" class="btn-view-all">
                     <span>View All Products</span>
                     <i class="fas fa-arrow-right"></i>
                 </a>
