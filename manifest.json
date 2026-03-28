@@ -10,7 +10,7 @@
   "background_color": "#ffffff",
   "icons": [
     {
-      "src": "/assets/icons/Logo Lucky Apliances.png",
+      "src": "/assets/icons/logoApp.png",
       "sizes": "512x512",
       "type": "image/png"
     }
