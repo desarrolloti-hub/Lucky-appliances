@@ -21,7 +21,7 @@ let additionalCharges = [];
 let currentDiscount = {
     amount: 0,
     percentage: 0,
-    type: null // 'amount' or 'percentage'
+    type: null
 };
 
 // Payment state
@@ -107,24 +107,89 @@ const getProductImage = (product) => {
     return 'https://via.placeholder.com/300x200/0a2540/ffffff?text=No+Image';
 };
 
-// ============ LOAD FUNCTIONS ============
+// =============================================
+// FUNCIONES DE STORAGE
+// =============================================
 
-function loadFromURL() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const serialsParam = urlParams.get('serials');
-    
-    if (serialsParam) {
-        try {
-            serialNumbers = JSON.parse(decodeURIComponent(serialsParam));
-            console.log('Serial numbers loaded:', serialNumbers);
+function loadFromLocalStorage() {
+    try {
+        // Intentar cargar desde diferentes claves posibles
+        const savedSerials = localStorage.getItem('checkoutSerials');
+        
+        if (savedSerials) {
+            serialNumbers = JSON.parse(savedSerials);
+            console.log('Serial numbers loaded from localStorage:', serialNumbers);
             return true;
-        } catch (error) {
-            console.error('Error parsing serial numbers:', error);
-            return false;
         }
+        
+        // Fallback: intentar cargar desde posCart
+        const posCart = localStorage.getItem('posCart');
+        if (posCart) {
+            const cartData = JSON.parse(posCart);
+            if (cartData.items && cartData.items.length > 0) {
+                const serials = [];
+                cartData.items.forEach(item => {
+                    if (item.serials && item.serials.length > 0) {
+                        item.serials.forEach(serial => {
+                            if (serial.serie) serials.push(serial.serie);
+                        });
+                    }
+                });
+                serialNumbers = serials;
+                console.log('Serials extracted from posCart:', serialNumbers);
+                return true;
+            }
+        }
+        
+        console.log('No serial numbers found in localStorage');
+        return false;
+    } catch (error) {
+        console.error('Error loading from localStorage:', error);
+        return false;
     }
-    return false;
 }
+
+function saveToLocalStorage() {
+    try {
+        // Guardar los seriales actuales
+        localStorage.setItem('checkoutSerials', JSON.stringify(serialNumbers));
+        
+        // Guardar los productos actuales
+        const productsToSave = products.map(item => ({
+            productId: item.product.id,
+            serial: item.serial,
+            productName: item.product.Model,
+            price: item.product.nuestroPrecio
+        }));
+        localStorage.setItem('checkoutProducts', JSON.stringify(productsToSave));
+        
+        console.log('Products saved to localStorage - Total:', products.length);
+    } catch (error) {
+        console.error('Error saving to localStorage:', error);
+    }
+}
+
+function clearCheckoutStorage() {
+    try {
+        localStorage.removeItem('checkoutSerials');
+        localStorage.removeItem('checkoutProducts');
+        localStorage.removeItem('selectedProducts');
+        localStorage.removeItem('selectedSerials');
+        localStorage.removeItem('posCart');
+        localStorage.removeItem('tempCart');
+        localStorage.removeItem('currentCart');
+        localStorage.removeItem('cartItems');
+        localStorage.removeItem('tempSerials');
+        localStorage.removeItem('selectedItems');
+        console.log('✅ All checkout data cleared from localStorage');
+    } catch (error) {
+        console.error('Error clearing localStorage:', error);
+    }
+}
+
+// =============================================
+// FUNCIONES DE PRODUCTOS
+// =============================================
 
 async function loadProducts() {
     try {
@@ -134,6 +199,8 @@ async function loadProducts() {
         allProducts = await productManager.loadProducts();
         
         products = [];
+        
+        // Filtrar productos basados en los seriales
         allProducts.forEach(product => {
             if (product.unidades && Array.isArray(product.unidades)) {
                 const matchingUnidades = product.unidades.filter(unidad => {
@@ -156,6 +223,9 @@ async function loadProducts() {
         updateSummary();
         updateProductCount();
         
+        // Guardar en localStorage después de cargar
+        saveToLocalStorage();
+        
     } catch (error) {
         console.error('Error loading products:', error);
         Swal.fire({
@@ -170,24 +240,75 @@ async function loadProducts() {
     }
 }
 
+function removeProduct(index) {
+    // Mostrar confirmación antes de eliminar
+    Swal.fire({
+        title: 'Remove Product?',
+        text: `Are you sure you want to remove ${products[index].product.Model} (Serial: ${products[index].serial}) from the sale?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, remove',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Eliminar el producto del array
+            const removedProduct = products[index];
+            products.splice(index, 1);
+            
+            // Actualizar serialNumbers
+            serialNumbers = serialNumbers.filter(serial => serial !== removedProduct.serial);
+            
+            // Guardar cambios en localStorage
+            saveToLocalStorage();
+            
+            // Re-renderizar la UI
+            renderProducts();
+            updateSummary();
+            updateProductCount();
+            
+            // Mostrar mensaje de éxito
+            showTemporaryMessage(`${removedProduct.product.Model} removed from sale`, 'success');
+            
+            // Si no hay más productos, limpiar storage y redirigir
+            if (products.length === 0) {
+                clearCheckoutStorage();
+                Swal.fire({
+                    icon: 'info',
+                    title: 'No Products',
+                    text: 'No products left in the sale. Redirecting to POS...',
+                    timer: 2000,
+                    showConfirmButton: true
+                }).then(() => {
+                    window.location.href = '../posAdmin/posAdmin.html';
+                });
+            }
+        }
+    });
+}
+
 function renderProducts() {
     if (products.length === 0) {
         productsGrid.innerHTML = `
-            <div class="loading">
-                <i class="fas fa-box-open"></i>
-                <p>No products found with the selected serial numbers</p>
+            <div class="loading" style="grid-column: 1/-1; text-align: center; padding: 50px;">
+                <i class="fas fa-box-open" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                <p>No products to sell</p>
+                <button onclick="window.location.href='../posAdmin/posAdmin.html'" class="btn-add-product" style="margin-top: 15px; padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer;">
+                    <i class="fas fa-plus"></i> Add Products
+                </button>
             </div>
         `;
         return;
     }
     
     const productGroups = new Map();
-    products.forEach(item => {
+    products.forEach((item, originalIndex) => {
         const productId = item.product.id;
         if (!productGroups.has(productId)) {
             productGroups.set(productId, []);
         }
-        productGroups.get(productId).push(item);
+        productGroups.get(productId).push({ ...item, originalIndex });
     });
     
     productsGrid.innerHTML = Array.from(productGroups.entries()).map(([productId, items]) => {
@@ -195,12 +316,18 @@ function renderProducts() {
         const imageUrl = getProductImage(product);
         const quantity = items.length;
         
-        const serialsList = items.map(item => 
-            `<div class="product-serial"><i class="fas fa-barcode"></i> ${escapeHtml(item.serial)}</div>`
-        ).join('');
+        const serialsList = items.map(item => `
+            <div class="product-serial" data-serial="${item.serial}">
+                <i class="fas fa-barcode"></i> 
+                <span class="serial-number">${escapeHtml(item.serial)}</span>
+                <button class="btn-remove-serial" data-index="${item.originalIndex}" title="Remove this item">
+                    <i class="fas fa-trash-alt"></i> Remove
+                </button>
+            </div>
+        `).join('');
         
         return `
-            <div class="product-card">
+            <div class="product-card" data-product-id="${productId}">
                 <div class="product-image">
                     <img src="${imageUrl}" 
                          alt="${product.Model}" 
@@ -210,12 +337,25 @@ function renderProducts() {
                     <h4>${escapeHtml(product.Model || 'No model')}</h4>
                     <span class="product-sku">SKU: ${escapeHtml(product.SKU || 'N/A')}</span>
                     ${quantity > 1 ? `<span class="product-quantity-badge">x${quantity}</span>` : ''}
-                    ${serialsList}
+                    <div class="product-serials-list">
+                        ${serialsList}
+                    </div>
                     <div class="product-price">${formatCurrency(product.nuestroPrecio * quantity)}</div>
                 </div>
             </div>
         `;
     }).join('');
+    
+    // Agregar event listeners para los botones de eliminar
+    document.querySelectorAll('.btn-remove-serial').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const index = parseInt(btn.dataset.index);
+            if (!isNaN(index)) {
+                removeProduct(index);
+            }
+        });
+    });
 }
 
 function updateProductCount() {
@@ -224,7 +364,113 @@ function updateProductCount() {
     }
 }
 
-// ============ CALCULATION FUNCTIONS ============
+// =============================================
+// AGREGAR ESTILOS PARA EL BOTÓN DE ELIMINAR
+// =============================================
+
+function addRemoveButtonStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        /* Estilos para el botón de eliminar producto */
+        .product-serial {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--light);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+        
+        .product-serial:hover {
+            background: var(--gray);
+        }
+        
+        .product-serial i {
+            color: var(--accent);
+            font-size: 0.9rem;
+        }
+        
+        .serial-number {
+            flex: 1;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: var(--text);
+            word-break: break-all;
+        }
+        
+        .btn-remove-serial {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .btn-remove-serial:hover {
+            background: linear-gradient(135deg, #c82333, #a71d2a);
+            transform: scale(1.02);
+            box-shadow: 0 2px 5px rgba(220,53,69,0.3);
+        }
+        
+        .btn-remove-serial:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-remove-serial i {
+            color: white;
+            font-size: 0.7rem;
+            margin: 0;
+        }
+        
+        .product-serials-list {
+            margin: 10px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        
+        .product-serials-list::-webkit-scrollbar {
+            width: 5px;
+        }
+        
+        .product-serials-list::-webkit-scrollbar-track {
+            background: var(--gray);
+            border-radius: 3px;
+        }
+        
+        .product-serials-list::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 3px;
+        }
+        
+        .product-quantity-badge {
+            display: inline-block;
+            background: var(--accent);
+            color: var(--primary);
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// =============================================
+// CÁLCULOS
+// =============================================
 
 function calculateProductsSubtotal() {
     return products.reduce((sum, item) => {
@@ -263,17 +509,10 @@ function calculateTotals() {
     const chargesTotal = calculateChargesTotal();
     const { discountValue } = calculateDiscount();
     
-    // Paso 1: Aplicar descuento al subtotal de productos
     const discountedProductsSubtotal = productsSubtotal - discountValue;
-    
-    // Paso 2: Subtotal = productos con descuento + cargos adicionales
     const subtotal = discountedProductsSubtotal + chargesTotal;
-    
-    // Paso 3: Impuesto calculado sobre el subtotal de productos con descuento (NO sobre cargos adicionales)
     const taxRate = applyTaxCheckbox.checked ? 0.0838 : 0;
     const tax = discountedProductsSubtotal * taxRate;
-    
-    // Paso 4: Total final
     const total = subtotal + tax;
     
     return { 
@@ -288,7 +527,9 @@ function calculateTotals() {
     };
 }
 
-// ============ DISCOUNT FUNCTIONS ============
+// =============================================
+// FUNCIONES DE DESCUENTO
+// =============================================
 
 function applyDiscount() {
     const amount = parseFloat(discountAmount.value) || 0;
@@ -358,7 +599,9 @@ function clearDiscount() {
     showTemporaryMessage('Discount removed', 'success');
 }
 
-// ============ PAYMENT FUNCTIONS ============
+// =============================================
+// FUNCIONES DE PAGO
+// =============================================
 
 function handlePaymentMethodChange() {
     const selected = document.querySelector('input[name="paymentMethod"]:checked')?.value;
@@ -387,7 +630,9 @@ function validatePayment() {
     return { valid: true };
 }
 
-// ============ CLIENT FUNCTIONS ============
+// =============================================
+// FUNCIONES DE CLIENTE
+// =============================================
 
 function escapeHtml(text) {
     if (!text) return '';
@@ -456,8 +701,6 @@ function createSuggestionElement(client) {
 }
 
 function acceptClientSuggestion(client) {
-    console.log('Accepting client suggestion:', client.name);
-    
     customerName.value = client.name;
     customerAddress.value = client.address || '';
     customerPhone.value = client.phone || '';
@@ -557,12 +800,9 @@ async function saveOrUpdateClient(customerData, saleId) {
             
             if (needsUpdate) {
                 await clientManager.updateClient(currentSuggestedClient.id, updateData);
-                console.log('Client updated with new information');
             }
             
             await clientManager.addPurchaseToClient(currentSuggestedClient.id, saleId);
-            console.log(`Sale ${saleId} added to client ${currentSuggestedClient.name} history`);
-            
             return currentSuggestedClient;
         } 
         else if (customerData.name && customerData.name.trim() !== '') {
@@ -580,7 +820,6 @@ async function saveOrUpdateClient(customerData, saleId) {
                 };
                 
                 const result = await clientManager.createClient(newClientData);
-                console.log('New client created:', result.client.name);
                 return result.client;
             }
         }
@@ -592,7 +831,9 @@ async function saveOrUpdateClient(customerData, saleId) {
     }
 }
 
-// ============ ADDITIONAL CHARGES FUNCTIONS ============
+// =============================================
+// CARGOS ADICIONALES
+// =============================================
 
 function renderAdditionalCharges() {
     if (additionalCharges.length === 0) {
@@ -648,33 +889,21 @@ function renderAdditionalCharges() {
 }
 
 function addNewCharge() {
-    const chargeDescriptionInput = document.querySelector('.charge-description:last-of-type');
-    const chargeAmountInput = document.querySelector('.charge-amount:last-of-type');
-    
-    if (chargeDescriptionInput && (!chargeDescriptionInput.value.trim() || chargeAmountInput.value === '0')) {
-        showTemporaryMessage('Please complete the current charge before adding a new one', 'warning');
-        return;
-    }
-    
     additionalCharges.push({
         description: 'Additional charge',
         amount: 0
     });
     renderAdditionalCharges();
     updateSummary();
-    
-    setTimeout(() => {
-        const newDescriptionInput = document.querySelector('.charge-description:last-of-type');
-        if (newDescriptionInput) newDescriptionInput.focus();
-    }, 100);
 }
 
-// ============ SUMMARY FUNCTIONS ============
+// =============================================
+// ACTUALIZAR RESUMEN
+// =============================================
 
 function updateSummary() {
     const totals = calculateTotals();
     
-    // Actualizar productos subtotal
     summaryProductsSubtotal.textContent = formatCurrency(totals.productsSubtotal);
     
     // Mostrar descuento aplicado
@@ -750,11 +979,9 @@ function updateSummary() {
         chargesContainer.innerHTML = '';
     }
     
-    // Actualizar impuestos
     taxRateDisplay.textContent = applyTaxCheckbox.checked ? '8.38' : '0';
     taxRow.style.display = applyTaxCheckbox.checked ? 'flex' : 'none';
     
-    // Actualizar subtotal, tax y total
     summarySubtotal.textContent = formatCurrency(totals.subtotal);
     summaryTax.textContent = formatCurrency(totals.tax);
     summaryTotal.textContent = formatCurrency(totals.total);
@@ -762,7 +989,9 @@ function updateSummary() {
     validateForm();
 }
 
-// ============ SELLER & DATE FUNCTIONS ============
+// =============================================
+// VENDEDOR Y FECHA
+// =============================================
 
 function loadSellerInfo() {
     try {
@@ -803,10 +1032,6 @@ function updateDateTime() {
     
     saleNumber = generateSaleNumber();
     saleNumberEl.textContent = saleNumber;
-    
-    localStorage.removeItem('selectedProducts');
-    localStorage.removeItem('selectedSerials');
-    console.log('Products cleared from localStorage');
 }
 
 function generateSaleNumber() {
@@ -821,7 +1046,9 @@ function generateSaleNumber() {
     return `SALE-${year}${month}${day}-${hours}${minutes}${seconds}-${random}`;
 }
 
-// ============ TERMS FUNCTIONS ============
+// =============================================
+// TÉRMINOS Y CONDICIONES
+// =============================================
 
 function updateTermsPreview() {
     if (termsPreview) {
@@ -846,7 +1073,9 @@ function resetTerms() {
     }
 }
 
-// ============ VALIDATION FUNCTIONS ============
+// =============================================
+// VALIDACIONES
+// =============================================
 
 function validateForm() {
     const isValid = customerName.value.trim() !== '';
@@ -912,7 +1141,9 @@ function showTemporaryMessage(message, type = 'success') {
     }, 3000);
 }
 
-// ============ PDF UPLOAD ============
+// =============================================
+// PDF Y COMPLETAR VENTA
+// =============================================
 
 async function uploadPDF(pdfBlob, saleId) {
     try {
@@ -982,8 +1213,6 @@ async function removeSerialNumbersFromProducts() {
     }
 }
 
-// ============ COMPLETE SALE ============
-
 async function completeSale() {
     try {
         completeSaleBtn.disabled = true;
@@ -999,15 +1228,6 @@ async function completeSale() {
         const userData = JSON.parse(localStorage.getItem('currentUser') || '{}');
         const totals = calculateTotals();
         const paymentData = getPaymentData();
-        
-        // Validate payment (always valid since we don't process payments)
-        const paymentValidation = validatePayment();
-        if (!paymentValidation.valid) {
-            showTemporaryMessage(paymentValidation.message, 'warning');
-            completeSaleBtn.disabled = false;
-            completeSaleBtn.innerHTML = '<i class="fas fa-check-circle"></i> Complete Sale';
-            return;
-        }
         
         const pdfProducts = [];
         products.forEach(item => {
@@ -1127,17 +1347,9 @@ async function completeSale() {
         
         await removeSerialNumbersFromProducts();
         
-        // Clear localStorage
-        localStorage.removeItem('selectedProducts');
-        localStorage.removeItem('selectedSerials');
-        localStorage.removeItem('posCart');
-        localStorage.removeItem('tempCart');
-        localStorage.removeItem('currentCart');
-        localStorage.removeItem('cartItems');
-        localStorage.removeItem('tempSerials');
-        localStorage.removeItem('selectedItems');
-        
-        console.log('✅ All cart data cleared');
+        // LIMPIAR LOCALSTORAGE COMPLETAMENTE
+        clearCheckoutStorage();
+        console.log('✅ All cart and checkout data cleared');
         
         Swal.close();
         
@@ -1218,10 +1430,15 @@ async function completeSale() {
     }
 }
 
-// ============ INITIALIZATION ============
+// =============================================
+// INICIALIZACIÓN
+// =============================================
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Initializing Close Sale...');
+    
+    // Agregar estilos para el botón de eliminar
+    addRemoveButtonStyles();
     
     // Tax setup
     if (taxRateInput) {
@@ -1244,8 +1461,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateTermsPreview();
     }
     
-    // Load products from URL
-    if (!loadFromURL()) {
+    // Load products from localStorage
+    if (!loadFromLocalStorage()) {
         Swal.fire({
             icon: 'error',
             title: 'No Products Selected',
@@ -1320,6 +1537,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Back button
     if (backBtn) {
         backBtn.addEventListener('click', () => {
+            // Limpiar storage al salir si no hay productos
+            if (products.length === 0) {
+                clearCheckoutStorage();
+            }
             window.location.href = '../posAdmin/posAdmin.html';
         });
     }

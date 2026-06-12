@@ -1,13 +1,25 @@
-// posAdmin.js - Point of Sale Logic
-import { ProductManager } from '/classes/product.js';
+// posAdmin.js - Point of Sale Logic with Full Search Functionality
+import { ProductManager, Product } from '/classes/product.js';
+import { db } from '/config/firebase-config.js';
+import { 
+    collection, 
+    getDocs, 
+    getDoc,
+    doc
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
 // Initialize product manager
 const productManager = new ProductManager();
 
 // Cart state
 let cart = [];
-let products = [];
-let filteredProducts = [];
+let allProducts = []; // Array de instancias de Product
+let productsLoaded = false;
+
+// Mapeos para nombres
+let brandsMap = new Map();
+let categoriesMap = new Map();
+let providersMap = new Map();
 
 // KEY para localStorage
 const CART_STORAGE_KEY = 'posCart';
@@ -30,146 +42,403 @@ const barcodeInput = document.getElementById('barcodeInput');
 const addBarcodeBtn = document.getElementById('addBarcodeBtn');
 const barcodeFeedback = document.getElementById('barcodeFeedback');
 
-// Variable for feedback timeout
+// Variables
 let feedbackTimeout;
-
-// Flag to control auto-focus behavior
 let canAutoFocus = true;
 
-// Currency formatter
+// =============================================
+// FUNCIONES DE NORMALIZACIÓN
+// =============================================
+
+function safeToString(value) {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number') return value.toString();
+    if (typeof value === 'boolean') return value.toString();
+    if (Array.isArray(value)) return value.join(' ');
+    return String(value);
+}
+
+function normalizeText(text) {
+    if (!text) return '';
+    let normalized = safeToString(text);
+    normalized = normalized.toLowerCase();
+    normalized = normalized.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    normalized = normalized.replace(/[^a-z0-9\s]/g, '');
+    normalized = normalized.replace(/\s+/g, ' ').trim();
+    return normalized;
+}
+
+// =============================================
+// CARGA DE DATOS INICIALES
+// =============================================
+
+async function loadInitialData() {
+    try {
+        showLoading(true);
+        
+        console.log('Loading brands, categories, providers...');
+        
+        // Cargar marcas
+        const brandsSnapshot = await getDocs(collection(db, "marcas"));
+        brandsSnapshot.forEach(doc => {
+            brandsMap.set(doc.id, doc.data().nombre || doc.id);
+        });
+        
+        // Cargar categorías
+        const categoriesSnapshot = await getDocs(collection(db, "categorias"));
+        categoriesSnapshot.forEach(doc => {
+            categoriesMap.set(doc.id, doc.data().nombre || doc.id);
+        });
+        
+        // Cargar proveedores
+        const providersSnapshot = await getDocs(collection(db, "proveedores"));
+        providersSnapshot.forEach(doc => {
+            providersMap.set(doc.id, doc.data().nombre || doc.id);
+        });
+        
+        console.log(`Loaded: ${brandsMap.size} brands, ${categoriesMap.size} categories, ${providersMap.size} providers`);
+        
+        // Cargar todos los productos usando ProductManager
+        await loadAllProducts();
+        
+        // Cargar carrito guardado
+        await loadCartFromStorage();
+        
+        // Mostrar estado inicial
+        showEmptySearchState();
+        updateProductCount(0);
+        
+        showBarcodeFeedback('Ready - Search by model, SKU, or scan serial', 'success');
+        
+    } catch (error) {
+        console.error('Error loading initial data:', error);
+        showBarcodeFeedback('Error loading data', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function loadAllProducts() {
+    try {
+        console.log('Loading all products from Firestore...');
+        
+        // Usar ProductManager para cargar productos (esto les da todos los métodos)
+        await productManager.loadBrandsAndCategoriesAndProviders();
+        const products = await productManager.loadProducts();
+        
+        // Enriquecer con nombres de marca, categoría, proveedor
+        allProducts = products.map(product => {
+            // Agregar nombres para búsqueda
+            product.brandName = brandsMap.get(product.Brand) || product.Brand || 'No brand';
+            product.categoryName = categoriesMap.get(product.Category) || product.Category || 'No category';
+            product.providerName = providersMap.get(product.Provider) || product.Provider || 'No provider';
+            
+            // Cache de textos normalizados para búsqueda rápida
+            product._searchCache = {
+                modelNorm: normalizeText(product.Model),
+                skuNorm: normalizeText(product.SKU),
+                idInternoNorm: normalizeText(product.idInterno),
+                brandNorm: normalizeText(product.brandName),
+                categoryNorm: normalizeText(product.categoryName),
+                descriptionNorm: normalizeText(product.ItemDescription),
+                especificacionesNorm: normalizeText(product.especificaciones),
+                locationNorm: normalizeText(product.Location)
+            };
+            
+            // Cache de seriales normalizados
+            if (product.unidades && Array.isArray(product.unidades)) {
+                product._serialNorm = [];
+                product.unidades.forEach(unidad => {
+                    const serial = unidad.serie || unidad.numeroSerie || unidad.serialNumber;
+                    if (serial) {
+                        product._serialNorm.push(normalizeText(serial));
+                    }
+                });
+            }
+            
+            return product;
+        });
+        
+        console.log(`Loaded ${allProducts.length} products with full methods`);
+        productsLoaded = true;
+        
+    } catch (error) {
+        console.error('Error loading products:', error);
+        throw error;
+    }
+}
+
+// =============================================
+// FUNCIONES DE BÚSQUEDA
+// =============================================
+
+function searchProductsLocally(searchTerm) {
+    if (!searchTerm || !searchTerm.trim() || !productsLoaded) {
+        return [];
+    }
+    
+    const normalizedTerm = normalizeText(searchTerm);
+    const searchWords = normalizedTerm.split(/\s+/).filter(w => w.length > 0);
+    const isMultiWord = searchWords.length > 1;
+    
+    console.log(`🔍 Searching: "${searchTerm}" (normalized: "${normalizedTerm}")`);
+    
+    const results = [];
+    
+    for (const product of allProducts) {
+        let score = 0;
+        let matchReason = '';
+        
+        const cache = product._searchCache;
+        
+        // 1. BÚSQUEDA EXACTA POR MODELO
+        if (cache.modelNorm === normalizedTerm) {
+            score = 100;
+            matchReason = 'model-exact';
+        }
+        // 2. MODELO COMIENZA CON EL TÉRMINO
+        else if (cache.modelNorm.startsWith(normalizedTerm)) {
+            score = 95;
+            matchReason = 'model-starts';
+        }
+        // 3. MODELO CONTIENE EL TÉRMINO
+        else if (cache.modelNorm.includes(normalizedTerm)) {
+            score = 85;
+            matchReason = 'model-contains';
+        }
+        // 4. BÚSQUEDA MULTI-PALABRA
+        else if (isMultiWord) {
+            const allWordsMatch = searchWords.every(word => cache.modelNorm.includes(word));
+            if (allWordsMatch) {
+                score = 90;
+                matchReason = 'model-all-words';
+            } else {
+                const matchingCount = searchWords.filter(word => cache.modelNorm.includes(word)).length;
+                if (matchingCount > 0) {
+                    score = 60 + (matchingCount * 10);
+                    matchReason = `model-${matchingCount}-words`;
+                }
+            }
+        }
+        
+        // 5. BÚSQUEDA POR SKU
+        if (score === 0) {
+            if (cache.skuNorm === normalizedTerm) {
+                score = 80;
+                matchReason = 'sku-exact';
+            } else if (cache.skuNorm.includes(normalizedTerm)) {
+                score = 70;
+                matchReason = 'sku-contains';
+            }
+        }
+        
+        // 6. BÚSQUEDA POR ID INTERNO
+        if (score === 0 && cache.idInternoNorm) {
+            if (cache.idInternoNorm === normalizedTerm) {
+                score = 75;
+                matchReason = 'id-exact';
+            } else if (cache.idInternoNorm.includes(normalizedTerm)) {
+                score = 65;
+                matchReason = 'id-contains';
+            }
+        }
+        
+        // 7. BÚSQUEDA POR MARCA
+        if (score === 0) {
+            if (cache.brandNorm === normalizedTerm) {
+                score = 65;
+                matchReason = 'brand-exact';
+            } else if (cache.brandNorm.includes(normalizedTerm)) {
+                score = 55;
+                matchReason = 'brand-contains';
+            }
+        }
+        
+        // 8. BÚSQUEDA POR NÚMEROS DE SERIE
+        if (score === 0 && product._serialNorm) {
+            const serialMatch = product._serialNorm.some(serial => 
+                serial === normalizedTerm || serial.includes(normalizedTerm)
+            );
+            if (serialMatch) {
+                score = 70;
+                matchReason = 'serial-match';
+            }
+        }
+        
+        if (score > 0) {
+            results.push({ product, score, matchReason });
+        }
+    }
+    
+    results.sort((a, b) => b.score - a.score);
+    
+    console.log(`✅ Found ${results.length} products`);
+    if (results.length > 0) {
+        console.log('Top result:', results[0].product.Model, `(score: ${results[0].score})`);
+    }
+    
+    return results.map(r => r.product);
+}
+
+function findProductBySerialNumber(serialNumber) {
+    if (!serialNumber || !productsLoaded) return null;
+    
+    const cleanSerial = normalizeText(serialNumber);
+    console.log(`🔍 Searching serial: "${cleanSerial}"`);
+    
+    for (const product of allProducts) {
+        if (product.unidades && Array.isArray(product.unidades)) {
+            const unidad = product.unidades.find(u => {
+                const serial = normalizeText(u.serie || u.numeroSerie || u.serialNumber || '');
+                return serial === cleanSerial;
+            });
+            
+            if (unidad) {
+                console.log(`✅ Found by serial: ${product.Model}`);
+                return { product, unidad };
+            }
+        }
+    }
+    
+    console.log(`❌ No product found with serial: "${cleanSerial}"`);
+    return null;
+}
+
+// =============================================
+// FUNCIONES DE UTILIDAD
+// =============================================
+
 const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    }).format(amount);
+        minimumFractionDigits: 2
+    }).format(amount || 0);
 };
 
-// Get product image
 const getProductImage = (product) => {
     if (product.images && product.images.length > 0) {
-        return product.getImageUrl(0);
+        const image = product.images[0];
+        if (image && typeof image === 'string') {
+            if (image.startsWith('data:image')) return image;
+            if (image.startsWith('http')) return image;
+            if (image.length > 100) return `data:image/jpeg;base64,${image}`;
+        }
     }
     return 'https://via.placeholder.com/300x200/0a2540/ffffff?text=No+Image';
 };
 
-/**
- * Obtener número de serie limpio de una unidad
- * @param {Object} unidad - Unidad del producto
- * @returns {string} - Número de serie limpio
- */
 function getSerialNumber(unidad) {
-    if (!unidad) return '';
-    return (unidad.serie || unidad.numeroSerie || unidad.serialNumber || '').toString().trim();
+    return safeToString(unidad?.serie || unidad?.numeroSerie || unidad?.serialNumber || '');
 }
 
-/**
- * Verificar si un serial ya existe en el carrito
- * @param {string} serialNumber - Número de serie a verificar
- * @returns {boolean} - true si ya existe, false si no
- */
 function isSerialInCart(serialNumber) {
-    if (!serialNumber) return false;
-    
-    const cleanSerial = serialNumber.toString().trim().replace(/\s/g, '');
-    
+    const cleanSerial = normalizeText(serialNumber);
     return cart.some(item => {
         if (item.serials && item.serials.length > 0) {
-            return item.serials.some(serial => {
-                const existingSerial = getSerialNumber(serial).replace(/\s/g, '');
-                return existingSerial === cleanSerial;
-            });
+            return item.serials.some(serial => 
+                normalizeText(getSerialNumber(serial)) === cleanSerial
+            );
         }
         return false;
     });
 }
 
-/**
- * Obtener todos los seriales del carrito
- * @returns {Array} - Array con todos los números de serie
- */
-function getAllSerialsInCart() {
-    const serials = [];
-    cart.forEach(item => {
-        if (item.serials && item.serials.length > 0) {
-            item.serials.forEach(serial => {
-                const serialNumber = getSerialNumber(serial);
-                if (serialNumber) {
-                    serials.push(serialNumber);
-                }
-            });
-        }
-    });
-    return serials;
-}
+// =============================================
+// CARRITO (PERSISTENCIA)
+// =============================================
 
-/**
- * Guardar carrito en localStorage
- */
 function saveCartToStorage() {
     try {
-        // Preparar datos para storage (solo lo necesario)
+        // Guardar solo la información necesaria para restaurar
         const cartData = cart.map(item => ({
             productId: item.product.id,
             quantity: item.quantity,
             serials: item.serials ? item.serials.map(s => ({
                 serie: s.serie || s.numeroSerie || s.serialNumber,
-                id: s.id,
-                // Guardar otros campos relevantes de la unidad
-                ...(s.estado && { estado: s.estado })
-            })) : [],
-            // Guardar información básica del producto para acceso rápido
-            productInfo: {
-                id: item.product.id,
-                Model: item.product.Model,
-                SKU: item.product.SKU,
-                nuestroPrecio: item.product.nuestroPrecio,
-                imageUrl: getProductImage(item.product)
-            }
+                id: s.id
+            })) : []
         }));
         
         localStorage.setItem(CART_STORAGE_KEY, JSON.stringify({
             items: cartData,
             timestamp: new Date().toISOString(),
-            totalItems: cart.reduce((sum, item) => sum + item.quantity, 0),
-            subtotal: cart.reduce((sum, item) => sum + (item.product.nuestroPrecio * item.quantity), 0),
-            serials: getAllSerialsInCart() // Guardar todos los seriales para referencia rápida
+            totalItems: cart.reduce((sum, item) => sum + item.quantity, 0)
         }));
         
-        console.log('Cart saved to localStorage:', CART_STORAGE_KEY);
+        console.log('Cart saved to localStorage, items:', cart.length);
     } catch (error) {
-        console.error('Error saving cart to localStorage:', error);
+        console.error('Error saving cart:', error);
     }
 }
 
-/**
- * Cargar carrito desde localStorage
- */
-function loadCartFromStorage() {
+async function loadCartFromStorage() {
     try {
-        const savedCart = localStorage.getItem(CART_STORAGE_KEY);
-        if (!savedCart) return null;
+        const saved = localStorage.getItem(CART_STORAGE_KEY);
+        if (!saved) {
+            console.log('No saved cart found');
+            return;
+        }
         
-        const cartData = JSON.parse(savedCart);
-        console.log('Cart loaded from localStorage:', cartData);
+        const cartData = JSON.parse(saved);
+        console.log('Loading cart from storage:', cartData.items.length, 'items');
         
-        return cartData;
+        for (const savedItem of cartData.items) {
+            // Buscar el producto en allProducts (que ya tiene todos los métodos)
+            const product = allProducts.find(p => p.id === savedItem.productId);
+            
+            if (product) {
+                // Verificar stock disponible
+                const stock = product.getTotalUnidades();
+                
+                if (stock >= savedItem.quantity) {
+                    // Restaurar las unidades específicas si hay seriales
+                    const restoredSerials = [];
+                    
+                    if (savedItem.serials && savedItem.serials.length > 0) {
+                        for (const savedSerial of savedItem.serials) {
+                            if (savedSerial.serie && product.unidades) {
+                                const unidad = product.unidades.find(u => 
+                                    (u.serie || u.numeroSerie || u.serialNumber) === savedSerial.serie
+                                );
+                                if (unidad) {
+                                    restoredSerials.push(unidad);
+                                }
+                            }
+                        }
+                    }
+                    
+                    cart.push({
+                        product: product,
+                        quantity: savedItem.quantity,
+                        serials: restoredSerials
+                    });
+                    
+                    console.log(`Restored ${savedItem.quantity}x ${product.Model}`);
+                } else {
+                    console.warn(`Cannot restore ${product.Model}: insufficient stock (${stock} available, ${savedItem.quantity} needed)`);
+                }
+            } else {
+                console.warn(`Product not found: ${savedItem.productId}`);
+            }
+        }
+        
+        if (cart.length > 0) {
+            syncCartWithStorage();
+            showBarcodeFeedback(`Cart restored: ${cart.length} item(s)`, 'success');
+        }
+        
     } catch (error) {
-        console.error('Error loading cart from localStorage:', error);
-        return null;
+        console.error('Error loading cart:', error);
     }
 }
 
-/**
- * Sincronizar carrito con localStorage después de cada modificación
- */
 function syncCartWithStorage() {
     renderCart();
     updateCartSummary();
     saveCartToStorage();
     
-    // Actualizar UI del botón clear y summary
     if (cart.length > 0) {
         clearCartBtn.style.display = 'inline-flex';
         cartSummary.style.display = 'block';
@@ -181,27 +450,23 @@ function syncCartWithStorage() {
     }
 }
 
-// ============ BARCODE SCANNER FUNCTIONS ============
+// =============================================
+// INTERFAZ DE USUARIO
+// =============================================
 
-/**
- * Show feedback message in barcode scanner
- * @param {string} message - Message to display
- * @param {string} type - Type of message (success, error, info)
- */
 function showBarcodeFeedback(message, type = 'info') {
     if (!barcodeFeedback) return;
     
-    const icons = {
-        success: 'check-circle',
-        error: 'exclamation-circle',
-        info: 'info-circle',
-        warning: 'exclamation-triangle'
+    const icons = { 
+        success: 'check-circle', 
+        error: 'exclamation-circle', 
+        info: 'info-circle', 
+        warning: 'exclamation-triangle' 
     };
     
-    barcodeFeedback.innerHTML = `<i class="fas fa-${icons[type] || icons.info}"></i> ${message}`;
+    barcodeFeedback.innerHTML = `<i class="fas fa-${icons[type]}"></i> ${message}`;
     barcodeFeedback.className = `barcode-feedback ${type}`;
     
-    // Clear feedback after 3 seconds
     if (feedbackTimeout) clearTimeout(feedbackTimeout);
     feedbackTimeout = setTimeout(() => {
         barcodeFeedback.innerHTML = '';
@@ -209,246 +474,28 @@ function showBarcodeFeedback(message, type = 'info') {
     }, 3000);
 }
 
-/**
- * Find product by serial number
- * @param {string} serialNumber - Serial number to search
- * @returns {Object|null} - Found product or null
- */
-function findProductBySerialNumber(serialNumber) {
-    if (!serialNumber || !products.length) return null;
-    
-    // Clean the serial number (remove spaces and special characters)
-    const cleanSerial = serialNumber.toString().trim().replace(/\s/g, '');
-    
-    console.log('Searching for serial number:', cleanSerial);
-    
-    // Search in all products by checking their unidades (serial numbers)
-    for (const product of products) {
-        // Check if the product has unidades array
-        if (product.unidades && Array.isArray(product.unidades)) {
-            // Look for the serial number in the unidades
-            const unidadEncontrada = product.unidades.find(unidad => {
-                // Check different possible serial number fields
-                const unidadSerial = unidad.serie || unidad.numeroSerie || unidad.serialNumber || unidad.id || '';
-                return unidadSerial.toString().trim().replace(/\s/g, '') === cleanSerial;
-            });
-            
-            if (unidadEncontrada) {
-                console.log('Product found by serial number:', product.Model, product.id);
-                return {
-                    product: product,
-                    unidad: unidadEncontrada
-                };
-            }
-        }
-        
-        // Also check if the product has a direct serial number field
-        if (product.serialNumber && product.serialNumber.toString().trim().replace(/\s/g, '') === cleanSerial) {
-            console.log('Product found by direct serial number:', product.Model, product.id);
-            return {
-                product: product,
-                unidad: null
-            };
-        }
-    }
-    
-    console.log('No product found with serial number:', cleanSerial);
-    return null;
-}
-
-/**
- * Process scanned barcode (serial number)
- * @param {string} barcode - Barcode/serial number to process
- */
-function processBarcode(barcode) {
-    if (!barcode) {
-        showBarcodeFeedback('Please enter a serial number', 'error');
-        return;
-    }
-    
-    // Show scanning indicator
-    barcodeInput.classList.add('scanning');
-    
-    const cleanSerial = barcode.toString().trim().replace(/\s/g, '');
-    
-    // Verificar si el serial ya existe en el carrito
-    if (isSerialInCart(cleanSerial)) {
-        showBarcodeFeedback(`✗ Serial ${barcode} is already in cart`, 'error');
-        barcodeInput.classList.remove('scanning');
-        barcodeInput.value = '';
-        barcodeInput.focus();
-        return;
-    }
-    
-    const result = findProductBySerialNumber(barcode);
-    
-    if (result) {
-        // Mostrar SOLO el producto encontrado en la grid
-        filteredProducts = [result.product];
-        renderProducts(filteredProducts);
-        updateProductCount(1);
-        
-        // Add product to cart
-        addToCart(result.product.id, result.unidad);
-        showBarcodeFeedback(`✓ ${result.product.Model} added to cart`, 'success');
-        
-        // Clear input after scanning
-        barcodeInput.value = '';
-    } else {
-        showBarcodeFeedback(`✗ No product found with serial: ${barcode}`, 'error');
-        
-        // Keep the invalid barcode for correction
-        barcodeInput.select();
-    }
-    
-    // Remove scanning indicator
-    setTimeout(() => {
-        barcodeInput.classList.remove('scanning');
-    }, 500);
-    
-    // Keep focus on input for next scan
-    barcodeInput.focus();
-}
-
-// ============ PRODUCT LOADING AND RENDERING ============
-
-/**
- * Load initial products
- */
-async function loadProducts() {
-    try {
-        showLoading(true);
-        
-        // Load products and related data (brands, categories, providers)
-        await productManager.loadBrandsAndCategoriesAndProviders();
-        products = await productManager.loadProducts();
-        
-        console.log('Products loaded for POS:', products.length);
-        
-        // Intentar cargar carrito guardado
-        const savedCartData = loadCartFromStorage();
-        if (savedCartData && savedCartData.items && savedCartData.items.length > 0) {
-            await restoreCartFromStorage(savedCartData);
-        }
-        
-        // Log sample of unidades to see structure
-        if (products.length > 0 && products[0].unidades) {
-            console.log('Sample product unidades:', products[0].unidades);
-        }
-        
-        // MODIFICADO: No mostrar productos inicialmente, mostrar mensaje de búsqueda
-        showEmptySearchState();
-        
-        // Update counter - mostrar 0 inicialmente
-        updateProductCount(0);
-        
-        // Show message in barcode scanner
-        if (products.length > 0) {
-            showBarcodeFeedback(`${products.length} products available - Search or scan serial`, 'info');
-        } else {
-            showBarcodeFeedback('No products loaded', 'warning');
-        }
-        
-    } catch (error) {
-        console.error('Error loading products:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error Loading Products',
-            text: error.message || 'Could not load products. Please try again.',
-            confirmButtonColor: '#4CAF50'
-        });
-        
-        showBarcodeFeedback('Error loading products', 'error');
-    } finally {
-        showLoading(false);
-    }
-}
-
-/**
- * Restaurar carrito desde localStorage
- * @param {Object} savedCartData - Datos guardados del carrito
- */
-async function restoreCartFromStorage(savedCartData) {
-    try {
-        console.log('Restoring cart from storage...');
-        
-        for (const savedItem of savedCartData.items) {
-            const product = productManager.getProductById(savedItem.productId);
-            
-            if (product) {
-                // Verificar stock actual
-                const availableStock = product.getTotalUnidades();
-                
-                if (availableStock >= savedItem.quantity) {
-                    // Buscar las unidades específicas si hay seriales guardados
-                    const unidadesARestaurar = [];
-                    
-                    if (savedItem.serials && savedItem.serials.length > 0) {
-                        // Intentar encontrar las unidades específicas por su serie
-                        for (const savedSerial of savedItem.serials) {
-                            if (savedSerial.serie && product.unidades) {
-                                const unidad = product.unidades.find(u => 
-                                    (u.serie || u.numeroSerie || u.serialNumber) === savedSerial.serie
-                                );
-                                if (unidad) {
-                                    unidadesARestaurar.push(unidad);
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Crear item en el carrito
-                    cart.push({
-                        product: product,
-                        quantity: savedItem.quantity,
-                        serials: unidadesARestaurar.length > 0 ? unidadesARestaurar : []
-                    });
-                    
-                    console.log(`Restored ${savedItem.quantity}x ${product.Model} to cart`);
-                } else {
-                    console.warn(`Cannot restore ${product.Model}: insufficient stock (${availableStock} available, ${savedItem.quantity} needed)`);
-                }
-            }
-        }
-        
-        if (cart.length > 0) {
-            syncCartWithStorage();
-            showBarcodeFeedback(`Cart restored: ${cart.length} item(s)`, 'success');
-        }
-        
-    } catch (error) {
-        console.error('Error restoring cart:', error);
-    }
-}
-
-/**
- * Mostrar estado vacío para búsqueda
- */
 function showEmptySearchState() {
     productGrid.innerHTML = `
         <div class="empty-state" style="grid-column: 1/-1; text-align: center; padding: 50px 20px;">
             <i class="fas fa-search" style="font-size: 3rem; color: var(--text-light); margin-bottom: 15px;"></i>
             <h3 style="color: var(--text); margin-bottom: 10px;">Search for Products</h3>
-            <p style="color: var(--text-light); max-width: 400px; margin: 0 auto;">
-                Use the search bar above to find products by model, SKU, or ID, 
-                or scan a serial number to add items directly to cart.
+            <p style="color: var(--text-light); max-width: 500px; margin: 0 auto;">
+                Try searching by:<br>
+                • <strong>Model</strong> - e.g., "Refrigerator", "Samsung Washer"<br>
+                • <strong>SKU</strong> - Product code<br>
+                • <strong>ID</strong> - Internal ID<br>
+                • <strong>Brand</strong> - Samsung, LG, Whirlpool<br>
+                • Or <strong>scan a serial number</strong>
             </p>
-            <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
-                <span class="scan-indicator">
-                    <i class="fas fa-barcode"></i> Scan serial
-                </span>
-                <span class="scan-indicator">
-                    <i class="fas fa-search"></i> Search text
-                </span>
+            <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <span class="scan-indicator"><i class="fas fa-barcode"></i> Scan serial</span>
+                <span class="scan-indicator"><i class="fas fa-search"></i> Search by model</span>
+                <span class="scan-indicator"><i class="fas fa-tag"></i> Search by SKU</span>
             </div>
         </div>
     `;
 }
 
-/**
- * Render products in grid
- * @param {Array} productsToRender - Products to display
- */
 function renderProducts(productsToRender) {
     if (!productsToRender || productsToRender.length === 0) {
         showEmptySearchState();
@@ -456,37 +503,30 @@ function renderProducts(productsToRender) {
     }
     
     productGrid.innerHTML = productsToRender.map(product => {
-        const imageUrl = getProductImage(product);
         const stock = product.getTotalUnidades();
         const stockClass = stock <= 0 ? 'out-of-stock' : stock <= 5 ? 'low-stock' : '';
-        
-        // Get first few serial numbers for display (if available)
-        const serialNumbers = product.unidades && Array.isArray(product.unidades) 
-            ? product.unidades.slice(0, 3).map(u => u.serie || u.numeroSerie || 'N/A').join(', ')
-            : 'No serials';
         
         return `
             <div class="pos-product-card ${stockClass}" data-product-id="${product.id}">
                 <div class="pos-product-image">
-                    <img src="${imageUrl}" 
+                    <img src="${getProductImage(product)}" 
                          alt="${product.Model || 'Product'}" 
                          loading="lazy"
                          onerror="this.src='https://via.placeholder.com/300x200/0a2540/ffffff?text=No+Image'">
                 </div>
                 <div class="pos-product-info">
                     <h4 title="${product.Model || 'No model'}">${product.Model || 'No model'}</h4>
-                    <span class="pos-product-sku">SKU: ${product.SKU || 'N/A'}</span>
+                    <div class="pos-product-meta">
+                        <span class="pos-product-sku">SKU: ${product.SKU || 'N/A'}</span>
+                        ${product.brandName && product.brandName !== 'No brand' ? 
+                            `<span class="pos-product-brand"><i class="fas fa-tag"></i> ${product.brandName}</span>` : ''}
+                    </div>
+                    ${product.idInterno ? `<span class="pos-product-id">ID: ${product.idInterno}</span>` : ''}
                     <div class="pos-product-price">${product.getNuestroPrecioFormatted()}</div>
                     <div class="pos-product-stock ${stockClass}">
                         <i class="fas fa-cubes"></i>
                         <span>Stock: ${stock} unit${stock !== 1 ? 's' : ''}</span>
                     </div>
-                    ${stock > 0 ? `
-                        <div class="pos-product-serials" title="Serial numbers: ${serialNumbers}">
-                            <i class="fas fa-barcode"></i>
-                            <small>${stock} serials available</small>
-                        </div>
-                    ` : ''}
                     <div class="pos-product-view-details">
                         <small><i class="fas fa-external-link-alt"></i> Click to view details</small>
                     </div>
@@ -495,248 +535,21 @@ function renderProducts(productsToRender) {
         `;
     }).join('');
     
-    // Add event listeners to cards - REDIRECT TO DETAIL PAGE INSTEAD OF ADDING TO CART
     document.querySelectorAll('.pos-product-card').forEach(card => {
         card.addEventListener('click', () => {
             const productId = card.dataset.productId;
-            // Redirect to product detail page
             window.location.href = `../productDetailAdmin/productDetailAdmin.html?id=${productId}`;
         });
     });
 }
 
-// ============ CART FUNCTIONS ============
-
-/**
- * Add product to cart
- * @param {string} productId - Product ID to add
- * @param {Object} specificUnidad - Specific unit/serial to add (optional)
- */
-function addToCart(productId, specificUnidad = null) {
-    const product = productManager.getProductById(productId);
-    if (!product) {
-        showBarcodeFeedback('Product not found', 'error');
-        return;
-    }
-    
-    // Check stock
-    const availableStock = product.getTotalUnidades();
-    if (availableStock <= 0) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Out of Stock',
-            text: `${product.Model} has no units available`,
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000
-        });
-        return;
-    }
-    
-    // CASO 1: Agregar con serial específico (desde escáner)
-    if (specificUnidad) {
-        const serialNumber = getSerialNumber(specificUnidad);
-        
-        // Verificar si el serial ya existe en el carrito
-        if (isSerialInCart(serialNumber)) {
-            showBarcodeFeedback(`Serial ${serialNumber} is already in cart`, 'error');
-            return;
-        }
-        
-        // Agregar como nuevo item individual
-        cart.push({
-            product: product,
-            quantity: 1,
-            serials: [specificUnidad]
-        });
-        
-        Swal.fire({
-            icon: 'success',
-            title: 'Product Added',
-            text: `${product.Model} (Serial: ${serialNumber}) added`,
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 1500
-        });
-    } 
-    // CASO 2: Agregar sin serial específico (desde búsqueda)
-    else {
-        // Buscar si ya existe un item de este producto SIN seriales
-        const existingItem = cart.find(item => 
-            item.product.id === productId && item.serials.length === 0
-        );
-        
-        if (existingItem) {
-            // Incrementar cantidad del item existente
-            if (existingItem.quantity < availableStock) {
-                existingItem.quantity++;
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Quantity Updated',
-                    text: `${product.Model} quantity: ${existingItem.quantity}`,
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 1500
-                });
-            } else {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Insufficient Stock',
-                    text: `Only ${availableStock} units available`,
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
-                return;
-            }
-        } else {
-            // Crear nuevo item sin seriales
-            cart.push({
-                product: product,
-                quantity: 1,
-                serials: []
-            });
-            
-            Swal.fire({
-                icon: 'success',
-                title: 'Product Added',
-                text: `${product.Model} added to cart`,
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 1500
-            });
-        }
-    }
-    
-    // Sync with storage
-    syncCartWithStorage();
-}
-
-/**
- * Remove item from cart
- * @param {number} index - Index of item to remove
- */
-function removeFromCart(index) {
-    const removedItem = cart[index];
-    cart.splice(index, 1);
-    
-    // Sync with storage
-    syncCartWithStorage();
-    
-    // Show feedback
-    Swal.fire({
-        icon: 'info',
-        title: 'Product Removed',
-        text: `${removedItem.product.Model} removed from cart`,
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 1500
-    });
-}
-
-/**
- * Update item quantity
- * @param {number} index - Index of item to update
- * @param {number} newQuantity - New quantity
- */
-function updateQuantity(index, newQuantity) {
-    if (newQuantity <= 0) {
-        removeFromCart(index);
-        return;
-    }
-    
-    const item = cart[index];
-    
-    // Si el item tiene seriales específicos, no permitimos cambiar la cantidad
-    if (item.serials && item.serials.length > 0) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Cannot Change Quantity',
-            text: 'Items with specific serial numbers must be added individually. Please add another unit separately.',
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000
-        });
-        return;
-    }
-    
-    const availableStock = item.product.getTotalUnidades();
-    
-    if (newQuantity > availableStock) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Insufficient Stock',
-            text: `Only ${availableStock} units available`,
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000
-        });
-        return;
-    }
-    
-    item.quantity = newQuantity;
-    
-    // Sync with storage
-    syncCartWithStorage();
-}
-
-/**
- * Clear all items from cart
- */
-function clearCart() {
-    if (cart.length === 0) return;
-    
-    Swal.fire({
-        title: 'Clear Cart?',
-        text: `Remove ${cart.length} item${cart.length !== 1 ? 's' : ''} from cart`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, clear cart',
-        cancelButtonText: 'Cancel'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            cart = [];
-            
-            // Sync with storage
-            syncCartWithStorage();
-            
-            Swal.fire({
-                icon: 'success',
-                title: 'Cart Cleared',
-                text: 'All items have been removed',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 1500
-            });
-            
-            // Focus barcode input for next scan
-            barcodeInput.focus();
-        }
-    });
-}
-
-/**
- * Render cart items
- */
 function renderCart() {
     if (cart.length === 0) {
         cartItems.innerHTML = `
             <div class="empty-cart">
                 <i class="fas fa-shopping-cart"></i>
                 <p>The cart is empty</p>
-                <small>Scan a serial number to add items</small>
+                <small>Scan a serial number or search to add items</small>
             </div>
         `;
         return;
@@ -744,49 +557,40 @@ function renderCart() {
     
     cartItems.innerHTML = cart.map((item, index) => {
         const product = item.product;
-        const imageUrl = getProductImage(product);
         const subtotal = product.nuestroPrecio * item.quantity;
-        
-        // Get serial numbers if available
         const serialsText = item.serials && item.serials.length > 0 
-            ? `<small class="cart-item-serials">Serial: ${item.serials.map(s => s.serie || s.numeroSerie || 'N/A').join(', ')}</small>`
+            ? `<small class="cart-item-serials"><i class="fas fa-barcode"></i> ${item.serials.map(s => s.serie || s.numeroSerie).join(', ')}</small>`
             : '';
-        
-        // Determinar si se pueden cambiar la cantidad (solo si no tiene seriales específicos)
         const canChangeQuantity = !(item.serials && item.serials.length > 0);
         
         return `
             <div class="cart-item" data-cart-index="${index}">
                 <div class="cart-item-image">
-                    <img src="${imageUrl}" alt="${product.Model || 'Product'}" 
+                    <img src="${getProductImage(product)}" alt="${product.Model}" 
                          onerror="this.src='https://via.placeholder.com/60x60/0a2540/ffffff?text=No+Image'">
                 </div>
                 <div class="cart-item-details">
-                    <h4 title="${product.Model || 'No model'}">${product.Model || 'No model'}</h4>
+                    <h4>${product.Model || 'No model'}</h4>
+                    <div class="cart-item-sku">${product.SKU || 'N/A'}</div>
                     <div class="cart-item-price">${formatCurrency(subtotal)}</div>
                     ${serialsText}
                     <div class="cart-item-quantity">
                         ${canChangeQuantity ? `
-                            <button class="quantity-btn decrease-btn" data-index="${index}" title="Decrease quantity">
-                                <i class="fas fa-minus"></i>
-                            </button>
+                            <button class="quantity-btn decrease-btn" data-index="${index}"><i class="fas fa-minus"></i></button>
                             <span class="quantity-value">${item.quantity}</span>
-                            <button class="quantity-btn increase-btn" data-index="${index}" title="Increase quantity">
-                                <i class="fas fa-plus"></i>
-                            </button>
+                            <button class="quantity-btn increase-btn" data-index="${index}"><i class="fas fa-plus"></i></button>
                         ` : `
                             <span class="quantity-value">${item.quantity}</span>
                         `}
                     </div>
                 </div>
-                <div class="cart-item-remove" data-index="${index}" title="Remove from cart">
+                <div class="cart-item-remove" data-index="${index}">
                     <i class="fas fa-times"></i>
                 </div>
             </div>
         `;
     }).join('');
     
-    // Add event listeners for cart buttons
     document.querySelectorAll('.decrease-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -812,15 +616,9 @@ function renderCart() {
     });
 }
 
-/**
- * Update cart summary (subtotal, tax, total)
- */
 function updateCartSummary() {
-    const subtotal = cart.reduce((sum, item) => {
-        return sum + (item.product.nuestroPrecio * item.quantity);
-    }, 0);
-    
-    const tax = subtotal * 0.0838; // 8.38% Tax
+    const subtotal = cart.reduce((sum, item) => sum + (item.product.nuestroPrecio * item.quantity), 0);
+    const tax = subtotal * 0.0838;
     const total = subtotal + tax;
     
     subtotalEl.textContent = formatCurrency(subtotal);
@@ -828,86 +626,217 @@ function updateCartSummary() {
     totalEl.textContent = formatCurrency(total);
 }
 
-// ============ SEARCH FUNCTIONS ============
+function updateProductCount(count) {
+    if (productCountEl) productCountEl.textContent = count;
+}
 
-/**
- * Search products
- * @param {string} searchTerm - Search term
- */
-function searchProducts(searchTerm) {
-    if (!searchTerm.trim()) {
-        // Si el término de búsqueda está vacío, mostrar estado vacío
-        showEmptySearchState();
-        filteredProducts = [];
-        updateProductCount(0);
+function showLoading(show) {
+    if (loadingEl) loadingEl.style.display = show ? 'flex' : 'none';
+    if (productGrid) productGrid.style.display = show ? 'none' : 'grid';
+}
+
+// =============================================
+// ACCIONES DEL CARRITO
+// =============================================
+
+function addToCart(productId, specificUnidad = null) {
+    const product = allProducts.find(p => p.id === productId);
+    if (!product) {
+        showBarcodeFeedback('Product not found', 'error');
         return;
     }
     
-    // Buscar productos que coincidan con el término
-    const filtered = productManager.searchProducts(searchTerm);
-    filteredProducts = filtered;
+    const stock = product.getTotalUnidades();
     
-    if (filtered.length > 0) {
-        // Mostrar SOLO los productos encontrados
-        renderProducts(filtered);
-        updateProductCount(filtered.length);
-        showBarcodeFeedback(`Found ${filtered.length} product${filtered.length !== 1 ? 's' : ''}`, 'success');
-    } else {
-        // No se encontraron productos
-        productGrid.innerHTML = `
-            <div class="empty-state" style="grid-column: 1/-1; text-align: center; padding: 50px 20px;">
-                <i class="fas fa-exclamation-circle" style="font-size: 3rem; color: var(--warning); margin-bottom: 15px;"></i>
-                <h3 style="color: var(--text); margin-bottom: 10px;">No Products Found</h3>
-                <p style="color: var(--text-light); max-width: 400px; margin: 0 auto;">
-                    No products match "${searchTerm}". Try a different search term or scan a serial number.
-                </p>
-            </div>
-        `;
-        updateProductCount(0);
-        showBarcodeFeedback(`No products found for "${searchTerm}"`, 'info');
+    if (stock <= 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Out of Stock',
+            text: `${product.Model} has no units available`,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
+        return;
     }
+    
+    // Con serial específico (desde escáner)
+    if (specificUnidad) {
+        const serialNumber = getSerialNumber(specificUnidad);
+        
+        if (isSerialInCart(serialNumber)) {
+            showBarcodeFeedback(`Serial ${serialNumber} is already in cart`, 'error');
+            return;
+        }
+        
+        cart.push({
+            product: product,
+            quantity: 1,
+            serials: [specificUnidad]
+        });
+        
+        Swal.fire({
+            icon: 'success',
+            title: 'Product Added',
+            text: `${product.Model} (Serial: ${serialNumber}) added`,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 1500
+        });
+    } 
+    // Sin serial específico (desde búsqueda)
+    else {
+        const existingItem = cart.find(item => 
+            item.product.id === productId && (!item.serials || item.serials.length === 0)
+        );
+        
+        if (existingItem) {
+            if (existingItem.quantity < stock) {
+                existingItem.quantity++;
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Quantity Updated',
+                    text: `${product.Model} quantity: ${existingItem.quantity}`,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Insufficient Stock',
+                    text: `Only ${stock} units available`,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+                return;
+            }
+        } else {
+            cart.push({
+                product: product,
+                quantity: 1,
+                serials: []
+            });
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Product Added',
+                text: `${product.Model} added to cart`,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }
+    }
+    
+    syncCartWithStorage();
 }
 
-/**
- * Update product counter
- * @param {number} count - Number of products
- */
-function updateProductCount(count) {
-    if (productCountEl) {
-        productCountEl.textContent = count;
-    }
+function removeFromCart(index) {
+    const removedItem = cart[index];
+    cart.splice(index, 1);
+    syncCartWithStorage();
+    
+    Swal.fire({
+        icon: 'info',
+        title: 'Product Removed',
+        text: `${removedItem.product.Model} removed from cart`,
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 1500
+    });
 }
 
-/**
- * Show/hide loading
- * @param {boolean} show - Whether to show loading
- */
-function showLoading(show) {
-    if (loadingEl) {
-        loadingEl.style.display = show ? 'flex' : 'none';
+function updateQuantity(index, newQuantity) {
+    if (newQuantity <= 0) {
+        removeFromCart(index);
+        return;
     }
-    if (productGrid) {
-        productGrid.style.display = show ? 'none' : 'grid';
+    
+    const item = cart[index];
+    
+    if (item.serials && item.serials.length > 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Cannot Change Quantity',
+            text: 'Items with specific serial numbers must be added individually.',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
+        return;
     }
+    
+    const stock = item.product.getTotalUnidades();
+    
+    if (newQuantity > stock) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Insufficient Stock',
+            text: `Only ${stock} units available`,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
+        return;
+    }
+    
+    item.quantity = newQuantity;
+    syncCartWithStorage();
 }
 
-// ============ CHECKOUT FUNCTION ============
+function clearCart() {
+    if (cart.length === 0) return;
+    
+    Swal.fire({
+        title: 'Clear Cart?',
+        text: `Remove ${cart.length} item${cart.length !== 1 ? 's' : ''} from cart`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, clear cart',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            cart = [];
+            syncCartWithStorage();
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Cart Cleared',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 1500
+            });
+            
+            barcodeInput.focus();
+        }
+    });
+}
 
-/**
- * Complete sale - Redirect to close sale page with serial numbers
- */
 function checkout() {
     if (cart.length === 0) return;
     
-    // Guardar carrito antes de redirigir (por si acaso)
+    // Guardar carrito antes de redirigir
     saveCartToStorage();
     
-    // Collect all serial numbers from cart
+    // Recolectar todos los seriales
     const allSerials = [];
     
     cart.forEach(item => {
         if (item.serials && item.serials.length > 0) {
-            // Add each serial number
             item.serials.forEach(serial => {
                 const serialNumber = serial.serie || serial.numeroSerie || serial.serialNumber || '';
                 if (serialNumber) {
@@ -915,8 +844,6 @@ function checkout() {
                 }
             });
         } else {
-            // If no specific serials, we need to handle this case
-            // For now, we'll add placeholder serials based on quantity
             for (let i = 0; i < item.quantity; i++) {
                 allSerials.push(`TEMP-${item.product.id}-${i + 1}`);
             }
@@ -925,44 +852,119 @@ function checkout() {
     
     console.log('Serials to sell:', allSerials);
     
-    // Create URL with serial numbers as parameters
-    const serialsParam = encodeURIComponent(JSON.stringify(allSerials));
-    const redirectUrl = `../closeSaleAdmin/closeSaleAdmin.html?serials=${serialsParam}`;
+    // Guardar seriales para la página de cierre
+    localStorage.setItem('checkoutSerials', JSON.stringify(allSerials));
     
-    // Redirect to close sale page
-    window.location.href = redirectUrl;
+    // Redirigir
+    window.location.href = '../closeSaleAdmin/closeSaleAdmin.html';
 }
 
-// ============ INITIALIZATION ============
+// =============================================
+// BÚSQUEDA PRINCIPAL
+// =============================================
+
+function performSearch(searchTerm) {
+    if (!searchTerm || !searchTerm.trim()) {
+        showEmptySearchState();
+        updateProductCount(0);
+        return;
+    }
+    
+    if (!productsLoaded) {
+        showBarcodeFeedback('Loading products, please wait...', 'info');
+        return;
+    }
+    
+    const results = searchProductsLocally(searchTerm);
+    
+    if (results.length > 0) {
+        renderProducts(results);
+        updateProductCount(results.length);
+        showBarcodeFeedback(`Found ${results.length} product${results.length !== 1 ? 's' : ''}`, 'success');
+    } else {
+        productGrid.innerHTML = `
+            <div class="empty-state" style="grid-column: 1/-1; text-align: center; padding: 50px 20px;">
+                <i class="fas fa-exclamation-circle" style="font-size: 3rem; color: var(--warning); margin-bottom: 15px;"></i>
+                <h3 style="color: var(--text); margin-bottom: 10px;">No Products Found</h3>
+                <p style="color: var(--text-light); max-width: 400px; margin: 0 auto;">
+                    No products match "${searchTerm}".<br>
+                    Try searching by model name, SKU, or brand.
+                </p>
+            </div>
+        `;
+        updateProductCount(0);
+        showBarcodeFeedback(`No results for "${searchTerm}"`, 'info');
+    }
+}
+
+function processBarcode(barcode) {
+    if (!barcode || !barcode.trim()) {
+        showBarcodeFeedback('Please enter a serial number', 'error');
+        return;
+    }
+    
+    if (!productsLoaded) {
+        showBarcodeFeedback('Loading products, please wait...', 'info');
+        return;
+    }
+    
+    barcodeInput.classList.add('scanning');
+    const cleanBarcode = barcode.trim();
+    
+    if (isSerialInCart(cleanBarcode)) {
+        showBarcodeFeedback(`Serial ${cleanBarcode} is already in cart`, 'error');
+        barcodeInput.value = '';
+        barcodeInput.classList.remove('scanning');
+        barcodeInput.focus();
+        return;
+    }
+    
+    const result = findProductBySerialNumber(cleanBarcode);
+    
+    if (result) {
+        renderProducts([result.product]);
+        updateProductCount(1);
+        addToCart(result.product.id, result.unidad);
+        showBarcodeFeedback(`✓ ${result.product.Model} added to cart`, 'success');
+        barcodeInput.value = '';
+    } else {
+        showBarcodeFeedback(`✗ No product found with serial: ${cleanBarcode}`, 'error');
+        barcodeInput.select();
+    }
+    
+    setTimeout(() => {
+        barcodeInput.classList.remove('scanning');
+    }, 500);
+    
+    barcodeInput.focus();
+}
+
+// =============================================
+// INICIALIZACIÓN
+// =============================================
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Initializing POS...');
-    loadProducts();
+    loadInitialData();
     
-    // Event Listeners
     checkoutBtn.addEventListener('click', checkout);
     clearCartBtn.addEventListener('click', clearCart);
     
-    // Search with debounce
     let searchTimeout;
     searchInput.addEventListener('input', (e) => {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
-            searchProducts(e.target.value);
+            performSearch(e.target.value);
         }, 300);
     });
     
-    // Clear search on Escape key
     searchInput.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             searchInput.value = '';
-            searchProducts('');
+            performSearch('');
         }
     });
     
-    // ============ BARCODE EVENT LISTENERS ============
-    
-    // Scan on Enter key
     barcodeInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -970,67 +972,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Scan on button click
     addBarcodeBtn.addEventListener('click', () => {
         processBarcode(barcodeInput.value.trim());
     });
-
-    // When clicking on search input, disable auto-focus temporarily
-    searchInput.addEventListener('click', () => {
-        canAutoFocus = false;
-    });
     
-    // When clicking on barcode input, enable auto-focus
-    barcodeInput.addEventListener('click', () => {
-        canAutoFocus = true;
-    });
-    
-    // When search input loses focus, re-enable auto-focus after a delay
-    searchInput.addEventListener('blur', () => {
-        // Don't immediately re-enable to avoid stealing focus from other elements
-        setTimeout(() => {
-            // Check if no other input is focused
-            if (document.activeElement !== barcodeInput && document.activeElement !== searchInput) {
-                canAutoFocus = true;
-            }
-        }, 200);
-    });
-    
-    // Clear feedback when typing
     barcodeInput.addEventListener('input', () => {
         if (feedbackTimeout) clearTimeout(feedbackTimeout);
         barcodeFeedback.innerHTML = '';
         barcodeFeedback.className = 'barcode-feedback';
-        
-        // Remove scanning class
         barcodeInput.classList.remove('scanning');
     });
     
-    // Focus barcode input on page load only if no other input is focused
     setTimeout(() => {
         if (document.activeElement !== searchInput) {
             barcodeInput.focus();
         }
     }, 500);
     
-    // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
-        // Ctrl/Cmd + K to focus search
         if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
             e.preventDefault();
-            canAutoFocus = false;
             searchInput.focus();
         }
-        
-        // Ctrl/Cmd + B to focus barcode
         if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
             e.preventDefault();
-            canAutoFocus = true;
             barcodeInput.focus();
             barcodeInput.select();
         }
-        
-        // Escape to clear barcode input
         if (e.key === 'Escape' && document.activeElement === barcodeInput) {
             barcodeInput.value = '';
             showBarcodeFeedback('Input cleared', 'info');
@@ -1038,7 +1006,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Export functions that might be needed globally
 window.addToCart = addToCart;
 window.processBarcode = processBarcode;
 window.clearCart = clearCart;
